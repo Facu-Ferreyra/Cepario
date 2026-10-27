@@ -27,6 +27,8 @@ let swapTimer = 0, pedido = 0;
 /**
  * Pinta la ficha de una variedad. El detalle (data/v/<slug>.json) se pide mientras corre la
  * animación de salida; si ya estaba precargado, aparece sin espera.
+ * @param {string} slug
+ * @param {boolean} animar  false en la primera ficha (sin animación de salida)
  */
 export function pintarFicha(slug, animar) {
   const n = ++pedido;                 // si el usuario ya pasó a otra variedad, se ignora esta respuesta
@@ -54,7 +56,10 @@ export function pintarFicha(slug, animar) {
   swapTimer = setTimeout(mostrar, RM ? 0 : 200);
 }
 
-/** Clicks dentro de la ficha: chips de linaje (navegan) y "Ver de cerca" (zoom). */
+/**
+ * Clicks dentro de la ficha: chips de linaje (navegan) y "Ver de cerca" (zoom).
+ * @param {(slug: string) => void} alIrA
+ */
 export function iniciarFicha(alIrA) {
   article.addEventListener('click', (e) => {
     const chip = e.target.closest('[data-slug]');

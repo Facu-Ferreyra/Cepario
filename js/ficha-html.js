@@ -7,11 +7,11 @@ import { CAMPOS, TIPO_TXT, esc, nf, tieneDatos } from './datos.js';
 
 /**
  * @typedef {object} ContextoFicha
- * @property {Object<string, object>} fuentes      Bloque "fuentes" de los datos
+ * @property {Object<string, import('./tipos.js').Fuente>} fuentes  Bloque "fuentes" de los datos
  * @property {(slug: string) => ({ id: string, nombre: string } | undefined)} variedad  Busca por slug
  * @property {(slug: string) => string[]} hijosDe   Slugs de las variedades que la tienen como padre
  * @property {(slug: string) => string} enlace       URL de la página de una variedad
- * @property {(v: object) => string} swatch          Fondo CSS de la muestra de color
+ * @property {(v: import('./tipos.js').Variedad) => string} swatch  Fondo CSS de la muestra de color
  */
 
 function fuenteBadge(d, fuentes) {
@@ -30,7 +30,7 @@ function valorHTML(campo, d) {
   return esc(x);
 }
 
-/** @param {ContextoFicha} ctx */
+/** @param {import('./tipos.js').Variedad} v @param {ContextoFicha} ctx @returns {string} */
 export function fichaHTML(v, ctx) {
   const tipo = v.tipo ? TIPO_TXT[v.tipo.valor] : 'Tipo sin registrar';
   const filas = CAMPOS.map(([campo, etiqueta, icono]) => {
@@ -63,7 +63,7 @@ export function fichaHTML(v, ctx) {
     </button>`;
 }
 
-/** Leyenda bajo el visor. @param {ContextoFicha} ctx */
+/** Leyenda bajo el visor. @param {import('./tipos.js').Variedad} v @param {ContextoFicha} ctx */
 export function caption(v, ctx) {
   const padres = (v.padres?.valor || []).map((s) => ctx.variedad(s)?.nombre).filter(Boolean);
   if (padres.length) return `Cruce de ${padres.join(' × ')}.`;

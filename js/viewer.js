@@ -177,6 +177,7 @@ export function salirDeFoco() {
   return true;
 }
 /** Botón "Ver de cerca" de la ficha: el loop mantiene su aria-pressed sincronizado con el zoom. */
+/** @param {HTMLElement | null} btn */
 export function setBotonCerca(btn) { closeupBtn = btn; }
 export function alternarCerca() { interact(); setZoom(tzoom > 2.2 ? 1 : 2.6); }
 
@@ -184,6 +185,11 @@ export function alternarCerca() { interact(); setZoom(tzoom > 2.2 ? 1 : 2.6); }
    CAMBIO DE VARIEDAD (transición del modelo)
    ========================================================= */
 const DUR = RM ? 0 : 780;
+/**
+ * Cambia el modelo 3D con una transición. Alcanza con el resumen: el cogollo sale de id y tipo.
+ * @param {import('./tipos.js').Resumen} v
+ * @param {number} [dir]  1 = viene de la derecha, -1 = de la izquierda
+ */
 export function mostrarVariedad(v, dir = 1) {
   if (sw) { liberarRig(sw.from); sw = null; }       // si había una transición a medias, se corta
   const from = rigActual;

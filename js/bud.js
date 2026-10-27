@@ -17,6 +17,9 @@ const FORMA = {
   hibrida: { L: 1.9,  W: 0.54, nodos: 5, zorro: 0.26, dens: 0.88, luz: 0.33, morado: 0.15, hojas: 14 },
   sativa:  { L: 2.3,  W: 0.46, nodos: 7, zorro: 0.45, dens: 0.75, luz: 0.39, morado: 0.05, hojas: 11 },
 };
+/** @typedef {{ id: string, tipo?: import('./tipos.js').Tipo }} Semilla  Lo único que define el cogollo */
+
+/** @param {Semilla} v */
 export function paleta(v) {
   const r = rngFrom(hashStr(v.id));
   const tipo = v.tipo || 'hibrida';
@@ -27,6 +30,7 @@ export function paleta(v) {
   const pistilo = pistiloJoven ? new THREE.Color().setHSL(0.11, 0.3, 0.82) : new THREE.Color().setHSL(0.045 + r() * 0.05, 0.72, 0.42 + r() * 0.12);
   return { r, tipo, F, verde, morado, purpura: new THREE.Color().setHSL(0.78 + r() * 0.06, 0.42, 0.24), pistilo, escarcha: 0.45 + r() * 0.5 };
 }
+/** Fondo CSS de la muestra de color (buscador, ficha, variedad del día). @param {Semilla} v @returns {string} */
 export function swatchCSS(v) {
   const p = paleta(v);
   const base = p.verde.clone().lerp(p.purpura, p.morado * 0.6);
@@ -71,6 +75,7 @@ const GEO = (() => {
   return { caliz, pistilo, tricoma, hojas, tallo };
 })();
 
+/** @param {Semilla} v @returns {THREE.Group} */
 export function construirCogollo(v) {
   const p = paleta(v), r = p.r, F = p.F;
   const L = F.L * (0.9 + r() * 0.2), W = F.W * (0.9 + r() * 0.2);

@@ -23,10 +23,16 @@ export const CAMPOS = ['criador', 'tipo', 'genetica', 'thc', 'cbd', 'floracion',
 export const TIPOS = ['hibrida', 'indica', 'sativa'];
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** @param {string} ruta @returns {any} */
 export const leerJSON = (ruta) => JSON.parse(readFileSync(ruta, 'utf8'));
 
 // Archivos .json de una carpeta, ordenados para que el resultado no dependa del sistema operativo.
 // Los que empiezan con "_" son ejemplos o plantillas: se validan pero no se publican.
+/**
+ * @param {string} dir
+ * @param {{ incluirEjemplos?: boolean }} [opciones]
+ * @returns {{ archivo: string, ruta: string, slug: string }[]}
+ */
 export function listarJSON(dir, { incluirEjemplos = false } = {}) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)

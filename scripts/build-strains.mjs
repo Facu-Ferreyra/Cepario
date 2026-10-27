@@ -26,7 +26,9 @@ import { resumir } from '../js/datos.js';
 const errores = [];
 
 /* ---------- 1. Importados ---------- */
+/** @type {Object<string, import('../js/tipos.js').Fuente>} */
 const fuentes = {};
+/** @type {Map<string, import('../js/tipos.js').Variedad>} */
 const porSlug = new Map();
 for (const { archivo, ruta } of listarJSON(DIR_IMPORTADOS)) {
   const db = leerJSON(ruta);
@@ -48,6 +50,7 @@ for (const [clave, f] of Object.entries(leerJSON(ARCHIVO_FUENTES))) {
 const aportes = listarJSON(DIR_APORTES);
 let nuevas = 0, camposAportados = 0;
 for (const { archivo, ruta, slug } of aportes) {
+  /** @type {import('../js/tipos.js').Aporte} */
   const a = leerJSON(ruta);
   let v = porSlug.get(slug);
   if (!v) {

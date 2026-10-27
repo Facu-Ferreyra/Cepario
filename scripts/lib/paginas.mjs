@@ -21,6 +21,7 @@ function reemplazar(html, buscado, nuevo) {
   return html.replace(buscado, () => nuevo);   // función: evita que "$&" en los datos se interprete
 }
 
+/** Texto para <meta name="description"> (hasta ~160 caracteres). @param {import('../../js/tipos.js').Variedad} v */
 function descripcion(v) {
   const tipo = v.tipo ? `variedad ${TIPO_TXT[v.tipo.valor].toLowerCase()}` : 'variedad de cannabis';
   const partes = [`${v.nombre}: ${tipo}${v.criador ? ` de ${v.criador.valor}` : ''}.`];
@@ -32,7 +33,10 @@ function descripcion(v) {
   return d;
 }
 
-/** @param {{ fuentes: object, variedades: object[] }} db */
+/**
+ * @param {{ fuentes: Object<string, import('../../js/tipos.js').Fuente>, variedades: import('../../js/tipos.js').Variedad[] }} db
+ * @returns {number} Cantidad de páginas generadas
+ */
 export function generarPaginas(db) {
   let plantilla = readFileSync(join(ROOT, 'index.html'), 'utf8');
   // Las rutas a recursos propios suben dos niveles (v/<slug>/ -> raíz)
