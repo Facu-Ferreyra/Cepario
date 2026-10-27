@@ -1,0 +1,7 @@
+{
+  "$comentario": "EJEMPLO con datos ficticios. Los archivos que empiezan con _ se validan pero no se publican. Para aportar, copiá este archivo como <slug>.json (sin _) y usá una fuente real.",
+  "thc": { "valor": { "min": 14, "max": 18 }, "fuente": "ejemplo" },
+  "floracion": { "valor": { "min": 8, "max": 9 }, "fuente": "ejemplo" },
+  "genetica": { "valor": { "indica": 80, "sativa": 20 }, "fuente": "ejemplo" },
+  "sabores": { "valor": ["Terroso", "Dulce"], "fuente": "ejemplo" }
+}

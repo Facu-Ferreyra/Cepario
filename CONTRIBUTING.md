@@ -13,17 +13,49 @@ Al enviar un aporte aceptás que se publique bajo:
 Y declarás que **tenés derecho a aportarlo**: lo escribiste vos, lo mediste vos, o viene de una
 fuente cuya licencia permite publicarlo bajo ODbL.
 
+## Cómo aportar datos
+
+No edites `data/strains.json`: es un archivo generado y se pisa al regenerar. Los aportes van aparte:
+
+1. **Declarar la fuente** (si es nueva) en `data/fuentes.json`, con nombre, URL, licencia y fecha:
+
+   ```json
+   "mi-medicion-2026": {
+     "nombre": "Medición propia de @usuario",
+     "url": "https://github.com/usuario",
+     "licencia": "ODbL-1.0",
+     "fecha": "2026-10-27"
+   }
+   ```
+
+2. **Crear `data/aportes/<slug>.json`** con solo los campos que aportás. El `<slug>` es el que aparece
+   en la URL de la variedad (por ejemplo `afghan-big-bud`). Si un campo ya existe en Kushy, el tuyo
+   lo reemplaza; los que no mandes se mantienen.
+
+   ```json
+   {
+     "thc": { "valor": { "min": 14, "max": 18 }, "fuente": "mi-medicion-2026" },
+     "floracion": { "valor": 9, "fuente": "mi-medicion-2026" }
+   }
+   ```
+
+   Para una **variedad nueva**, usá un slug que no exista y agregá `"nombre": "Nombre de la variedad"`.
+   Hay un ejemplo completo en `data/aportes/_afghan-big-bud.json` (los archivos que empiezan con `_`
+   son ejemplos: se validan pero no se publican).
+
+3. **Regenerar** con `node scripts/build-strains.mjs` e incluir el `data/strains.json` resultante en el PR.
+
 ## Reglas para datos
 
 1. **Cada dato lleva su fuente.** Formato: `{ "valor": ..., "fuente": "<clave>" }`, y la clave tiene
-   que existir en el bloque `fuentes` de `data/strains.json` con nombre, URL, licencia y fecha.
+   que existir en `data/fuentes.json` (o ser `kushy`) con nombre, URL, licencia y fecha.
 2. **No se aceptan datos copiados** de sitios con "todos los derechos reservados" (por ejemplo,
    bancos de semillas o enciclopedias comerciales), aunque el sitio sea de acceso gratuito.
 3. **No se aceptan afirmaciones médicas** ("trata la depresión", "sirve para el dolor"). Cepario es
    informativo; los efectos reportados van en `efectos` y `adversos`.
 4. **Unidades explícitas:** THC y CBD en %, floración en semanas. Si es un rango, `{ "min": x, "max": y }`.
-5. No edites `data/strains.json` a mano para datos de Kushy: se regenera con
-   `scripts/build-strains.mjs`.
+5. Para corregir un dato de Kushy, mandá un aporte con el campo corregido y su fuente: no edites
+   `data/importados/kushy.json`, que se regenera desde el CSV con `scripts/importar-kushy.mjs`.
 
 ## Reglas para código
 

@@ -1,0 +1,9 @@
+{
+  "ejemplo": {
+    "nombre": "Aporte de ejemplo (datos ficticios)",
+    "url": "https://github.com/Facu-Ferreyra/Cepario/blob/main/CONTRIBUTING.md",
+    "licencia": "ODbL-1.0",
+    "fecha": "2026-10-27",
+    "nota": "EJEMPLO: fuente ficticia que usa solo data/aportes/_afghan-big-bud.json. No se publica."
+  }
+}
