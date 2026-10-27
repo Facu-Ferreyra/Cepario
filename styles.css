@@ -72,7 +72,8 @@ button,select{font:inherit;color:inherit;background:none;border:0;padding:0;curs
 .hint{position:absolute;top:4px;right:0;display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);pointer-events:none;transition:opacity .6s}
 .hint .ic{width:16px;height:16px}
 .hint.gone{opacity:0}
-.badge3d{position:absolute;top:4px;left:0;font-size:10.5px;color:var(--muted);letter-spacing:.04em;pointer-events:none}
+.badge3d{position:absolute;top:4px;left:0;z-index:6;padding:1px 6px 1px 0;border-radius:4px;background:color-mix(in srgb,var(--bg) 75%,transparent);
+  font-size:10.5px;color:var(--muted);letter-spacing:.04em;pointer-events:none}
 .rail{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:6;display:grid;gap:9px}
 .rbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);
   transition:border-color .2s,background-color .3s,color .3s,transform .15s}

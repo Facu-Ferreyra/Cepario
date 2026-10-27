@@ -14,6 +14,8 @@ const hero = $('hero'), stage = $('stage');
 const ground = $('ground'), hint = $('hint');
 const btnZin = $('zin'), btnZout = $('zout'), btnExpand = $('expand'), btnLight = $('light');
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TACTIL = matchMedia('(hover: none) and (pointer: coarse)').matches;   // celulares y tablets
+const PARAMS = new URLSearchParams(location.search);                       // ?fps muestra un contador; ?post=0|1 fuerza el postprocesado
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const clampZoom = (z) => Math.min(3.4, Math.max(0.55, z));
 
@@ -71,6 +73,115 @@ function liberarRig(rig) {
 }
 
 /* =========================================================
+   POSTPROCESADO: oclusión ambiental (GTAO) + profundidad de campo suave
+   Se apaga en pantallas táctiles y con "reducir movimiento", y se apaga solo si el visor baja de 50 FPS.
+   Los módulos se piden recién cuando hacen falta: en celulares ni se descargan.
+   ========================================================= */
+// Profundidad de campo propia: BokehPass de Three.js fuerza alfa = 1 y taparía la página detrás del canvas.
+// Cada píxel junta vecinos en espiral; un vecino aporta si su propio desenfoque alcanza a este píxel.
+// Autofoco: la distancia de foco es la de la superficie que queda en el centro del visor.
+const DOF = {
+  uniforms: {
+    tDiffuse: { value: null }, tProf: { value: null }, cameraNear: { value: 0.01 }, cameraFar: { value: 200 },
+    focoUv: { value: new THREE.Vector2(0.5, 0.5) }, focoRespaldo: { value: 6 }, escala: { value: 1 }, maxCoc: { value: 4 },
+    resolucion: { value: new THREE.Vector2(1, 1) },
+  },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `
+    #include <packing>
+    #define MUESTRAS 16
+    uniform sampler2D tDiffuse, tProf;
+    uniform float cameraNear, cameraFar, focoRespaldo, escala, maxCoc;
+    uniform vec2 resolucion, focoUv;
+    varying vec2 vUv;
+    float foco;
+    float distancia(vec2 uv) { float d = texture2D(tProf, uv).x; return d >= 1.0 ? -1.0 : -perspectiveDepthToViewZ(d, cameraNear, cameraFar); }  // -1 = fondo vacío
+    float coc(float z) { return z < 0.0 ? 0.0 : min(maxCoc, abs(z - foco) * escala); }  // radio de desenfoque en píxeles
+    void main() {
+      // autofoco: promedio de 5 puntos alrededor del centro del visor (ignora el fondo vacío)
+      float sz = 0.0, nz = 0.0;
+      for (int i = 0; i < 5; i++) {
+        vec2 o = i == 0 ? vec2(0.0) : vec2(cos(float(i) * 1.5708), sin(float(i) * 1.5708)) * 0.025;
+        float z = distancia(focoUv + o);
+        if (z > 0.0) { sz += z; nz += 1.0; }
+      }
+      foco = nz > 0.0 ? sz / nz : focoRespaldo;
+      float zc = distancia(vUv), cc = coc(zc);
+      vec4 suma = texture2D(tDiffuse, vUv);
+      float peso = 1.0;
+      // giro distinto por píxel (ruido de gradiente intercalado): cambia el patrón repetido por un grano fino
+      float giro = 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584))));
+      for (int i = 0; i < MUESTRAS; i++) {
+        float r = sqrt((float(i) + 0.5) / float(MUESTRAS)) * maxCoc, a = float(i) * 2.39996 + giro;
+        vec2 uv = vUv + vec2(cos(a), sin(a)) * r / resolucion;
+        float zs = distancia(uv), cs = coc(zs);
+        float alcance = (zs < 0.0 || (zc > 0.0 && zs > zc + 0.02)) ? min(cs, cc) : cs;  // lo de atrás no tapa lo de adelante
+        float w = clamp(alcance - r + 1.0, 0.0, 1.0);
+        suma += texture2D(tDiffuse, uv) * w; peso += w;
+      }
+      gl_FragColor = suma / peso;  // el canvas usa alfa premultiplicado: promediar rgba junto respeta los bordes
+    }`,
+};
+let post = null;
+const quierePost = PARAMS.has('post') ? PARAMS.get('post') === '1' : !RM && !TACTIL;
+async function activarPost() {
+  const base = 'three/addons/postprocessing/';
+  const [{ EffectComposer }, { RenderPass }, { GTAOPass }, { ShaderPass }, { OutputPass }] = await Promise.all(
+    ['EffectComposer', 'RenderPass', 'GTAOPass', 'ShaderPass', 'OutputPass'].map((m) => import(`${base}${m}.js`)));
+  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
+  composer.addPass(new RenderPass(scene, camera));
+  const gtao = new GTAOPass(scene, camera, 1, 1);
+  const tamGtao = gtao.setSize.bind(gtao);
+  gtao.setSize = (w, h) => tamGtao(Math.ceil(w / 2), Math.ceil(h / 2));   // a media resolución: cuesta la mitad y el AO es suave igual
+  gtao.updateGtaoMaterial({ radius: 0.12, distanceExponent: 1.5, thickness: 1, scale: 1.2, samples: 12 });
+  gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 });
+  composer.addPass(gtao);
+  const dof = new ShaderPass(DOF);
+  dof.uniforms.tProf.value = gtao.depthTexture;
+  composer.addPass(dof);
+  // Tone mapping y sRGB como hace el renderer sin postprocesado. Los colores llegan premultiplicados por alfa:
+  // se separan antes de la curva sRGB y se vuelven a multiplicar después (si no, los bordes salen con un halo claro).
+  const salida = new OutputPass();
+  salida.material.fragmentShader = salida.material.fragmentShader
+    .replace('gl_FragColor = texture2D( tDiffuse, vUv );', '$& gl_FragColor.rgb /= max( gl_FragColor.a, 1e-4 );')
+    .replace(/}\s*$/, 'gl_FragColor.rgb *= gl_FragColor.a; }');
+  composer.addPass(salida);
+  post = { composer, gtao, dof, desde: performance.now() };
+  medir();
+}
+function desactivarPost() {
+  if (!post) return;
+  post.composer.dispose(); post.gtao.dispose();
+  post = null;
+  console.info('Cepario: postprocesado desactivado para mantener la fluidez.');
+}
+function actualizarDof() {
+  const u = post.dof.uniforms, pr = renderer.getPixelRatio();
+  u.focoUv.value.set(Fr.cx / Fr.W, 1 - Fr.cy / Fr.H);   // centro del visor en coordenadas de textura
+  u.focoRespaldo.value = camera.position.z;             // si el centro cae en el fondo: el centro del cogollo
+  u.escala.value = 3 * Math.pow(zoom, 1.4) * pr;       // más cerca = menos profundidad de campo, como en macro
+  u.maxCoc.value = Math.min(6, 1 + 1.6 * zoom) * pr;
+  u.cameraNear.value = camera.near; u.cameraFar.value = camera.far;
+}
+
+/* ---------- Medidor de FPS: apaga el postprocesado si no llega a 50 y alimenta el contador de ?fps ---------- */
+const hud = PARAMS.has('fps') ? document.body.appendChild(Object.assign(document.createElement('div'), { ariaHidden: 'true' })) : null;
+if (hud) hud.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:99;padding:4px 8px;border-radius:6px;background:#000a;color:#fff;font:12px/1.3 monospace;pointer-events:none';
+const fps = { t0: 0, n: 0, lentos: 0 };
+function contarFrame(now) {
+  if (!fps.t0) { fps.t0 = now; return; }
+  fps.n++;
+  const dur = now - fps.t0;
+  if (dur < 1000) return;
+  const valor = fps.n * 1000 / dur;
+  fps.t0 = now; fps.n = 0;
+  if (hud) hud.textContent = `${valor.toFixed(0)} FPS · ${post ? 'con' : 'sin'} postprocesado`;
+  if (dur > 1500 || !post || PARAMS.has('post') || now - post.desde < 3000) return;   // pestaña en pausa o recién activado: no cuenta
+  fps.lentos = valor < 47.5 ? fps.lentos + 1 : 0;   // margen para monitores de 50 Hz
+  if (fps.lentos >= 3) desactivarPost();
+}
+
+/* =========================================================
    ENCUADRE
    ========================================================= */
 const Fr = { W: 1, H: 1, st: { x: 0, y: 0, w: 1, h: 1 }, cx: 0, cy: 0, px: 300, init: false };
@@ -79,6 +190,11 @@ function medir() {
   Fr.W = Math.max(1, hr.width); Fr.H = Math.max(1, hr.height);
   Fr.st = { x: sr.left - hr.left, y: sr.top - hr.top, w: Math.max(1, sr.width), h: Math.max(1, sr.height) };
   renderer.setSize(Fr.W, Fr.H, false);
+  if (post) {
+    post.composer.setPixelRatio(renderer.getPixelRatio());
+    post.composer.setSize(Fr.W, Fr.H);
+    post.dof.uniforms.resolucion.value.set(Fr.W, Fr.H).multiplyScalar(renderer.getPixelRatio());
+  }
 }
 new ResizeObserver(medir).observe(hero);
 new ResizeObserver(medir).observe(stage);
@@ -279,9 +395,14 @@ function frame(now) {
 
   camera.position.z = Fr.H / (2 * TAN * Fr.px * zoom);
   camera.setViewOffset(Fr.W, Fr.H, Fr.W / 2 - Fr.cx, Fr.H / 2 - Fr.cy, Fr.W, Fr.H);
-  renderer.render(scene, camera);
+  if (post) { actualizarDof(); post.composer.render(dt); }
+  else renderer.render(scene, camera);
+  contarFrame(now);
   requestAnimationFrame(frame);
 }
 
 /** Arranca el loop de render (antes de que lleguen los datos, para que el loader se vea animado). */
-export function arrancarVisor() { requestAnimationFrame(frame); }
+export function arrancarVisor() {
+  requestAnimationFrame(frame);
+  if (quierePost) activarPost().catch((err) => console.warn('No se pudo cargar el postprocesado', err));
+}

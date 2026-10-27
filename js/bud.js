@@ -66,8 +66,12 @@ const GEO = (() => {
     [...der].reverse().forEach(([x, y]) => s.lineTo(-x, y));
     s.lineTo(0, 0);
     const g = new THREE.ShapeGeometry(s, 2);
-    const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); p.setZ(i, (0.3 + k * 0.08) * y * y + 0.5 * Math.abs(x)); }
+    const p = g.attributes.position, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i);
+      p.setZ(i, (0.3 + k * 0.08) * y * y + 0.5 * Math.abs(x));
+      uv.setXY(i, x / (2 * ancho) + 0.5, y);   // u cruza la hoja (nervio central en 0.5), v va de la base a la punta
+    }
     g.computeVertexNormals();
     return shared(g);
   });
@@ -75,9 +79,133 @@ const GEO = (() => {
   return { caliz, pistilo, tricoma, hojas, tallo };
 })();
 
+/* =========================================================
+   TEXTURAS PROCEDURALES (canvas, sin archivos externos)
+   Se generan una sola vez con semilla fija y las comparten todas las variedades.
+   ========================================================= */
+/** Ruido de valor que se repite en los bordes (para texturas que se pueden repetir). */
+function ruidoRepetible(celdas, r) {
+  const v = Float32Array.from({ length: celdas * celdas }, r);
+  const at = (i, j) => v[((j % celdas + celdas) % celdas) * celdas + ((i % celdas + celdas) % celdas)];
+  const suave = (t) => t * t * (3 - 2 * t);
+  return (x, y) => { // x, y en [0,1)
+    const fx = x * celdas, fy = y * celdas, i = Math.floor(fx), j = Math.floor(fy), u = suave(fx - i), w = suave(fy - j);
+    return (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - w) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * w;
+  };
+}
+/**
+ * Arma normalMap y roughnessMap a partir de un mapa de alturas.
+ * @param {number} w @param {number} h
+ * @param {(u: number, v: number) => [number, number]} muestra  devuelve [altura, rugosidad] para u, v ∈ [0,1)
+ * @param {number} relieve  cuánto se inclina la normal por unidad de pendiente
+ */
+function texturasDesdeAlturas(w, h, muestra, relieve) {
+  const alt = new Float32Array(w * h), rug = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const [a, r] = muestra(x / w, 1 - y / h);  // la fila 0 del canvas es la parte de arriba (v = 1)
+    alt[y * w + x] = a; rug[y * w + x] = r;
+  }
+  const lienzo = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const cn = lienzo(), cr = lienzo();
+  const dn = cn.getContext('2d').createImageData(w, h), dr = cr.getContext('2d').createImageData(w, h);
+  const A = (x, y) => alt[((y + h) % h) * w + ((x + w) % w)];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const dx = (A(x + 1, y) - A(x - 1, y)) * relieve, dy = (A(x, y - 1) - A(x, y + 1)) * relieve;
+    const k = 1 / Math.hypot(dx, dy, 1), o = (y * w + x) * 4;
+    dn.data[o] = (-dx * k * 0.5 + 0.5) * 255; dn.data[o + 1] = (-dy * k * 0.5 + 0.5) * 255; dn.data[o + 2] = (k * 0.5 + 0.5) * 255; dn.data[o + 3] = 255;
+    dr.data.fill(Math.max(0, Math.min(255, rug[y * w + x] * 255)), o, o + 3); dr.data[o + 3] = 255;
+  }
+  cn.getContext('2d').putImageData(dn, 0, 0); cr.getContext('2d').putImageData(dr, 0, 0);
+  const tex = (c) => { const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
+  return { normal: tex(cn), rugosidad: tex(cr) };
+}
+let TEX = null;
+function texturas() {
+  if (TEX) return TEX;
+  const r = rngFrom(0xc3a1);
+  // Hoja de azúcar: nervio central hundido, nervaduras laterales en diagonal y grano fino
+  const grano = ruidoRepetible(48, r), manchas = ruidoRepetible(8, r);
+  const hoja = texturasDesdeAlturas(128, 256, (u, v) => {
+    const X = (u - 0.5) * 0.44;                          // ancho real aproximado de la hoja
+    const central = Math.exp(-(((u - 0.5) / 0.025) ** 2));
+    const fase = (v - 1.6 * Math.abs(X)) / 0.12;        // nervaduras que suben hacia el borde
+    const lateral = Math.exp(-(((fase - Math.round(fase)) / 0.09) ** 2)) * Math.min(1, Math.abs(X) * 18) * (1 - Math.abs(u - 0.5) * 1.6);
+    const g = grano(u, v), m = manchas(u, v);
+    return [-0.5 * central - 0.18 * lateral + 0.12 * g + 0.15 * m, 0.88 - 0.25 * central - 0.15 * lateral + 0.12 * (g - 0.5)];
+  }, 9);
+  // Cáliz: ruido fino que se repite (pequeños bultos de la superficie)
+  const fino = ruidoRepetible(32, r), medio = ruidoRepetible(9, r);
+  const caliz = texturasDesdeAlturas(128, 128, (u, v) => {
+    const f = fino(u, v), m = medio(u, v);
+    return [0.6 * f * f + 0.3 * m, 0.7 + 0.3 * f - 0.1 * m];
+  }, 7);
+  caliz.normal.repeat.set(4, 3); caliz.rugosidad.repeat.set(4, 3);
+  TEX = { hoja, caliz };
+  return TEX;
+}
+
+/* =========================================================
+   MATERIALES CON SHADER PROPIO
+   ========================================================= */
+/**
+ * Tricomas: material estándar + destello tipo escarcha. Cada tricoma tiene una "faceta" con
+ * orientación propia (sale de su posición, así que es determinística) y brilla cuando esa faceta
+ * queda a mitad de camino entre la luz y la cámara (vector medio de Blinn-Phong).
+ * @param {number} brillo  intensidad del destello (depende de la escarcha de la variedad)
+ */
+function materialTricomas(brillo) {
+  const m = new THREE.MeshStandardMaterial({ color: 0xdedbcc, roughness: 0.45, metalness: 0 });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uBrillo = { value: brillo };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vFaceta;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vec3 sem = fract(sin(instanceMatrix[3].xyz * 91.7 + vec3(0.0, 1.3, 2.9)) * 43758.5453) * 2.0 - 1.0;
+        vFaceta = normalize(normalMatrix * mat3(instanceMatrix) * sem);`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vFaceta;\nuniform float uBrillo;')
+      .replace('#include <opaque_fragment>', `
+        #if NUM_DIR_LIGHTS > 0
+          vec3 nf = normalize(normal + vFaceta * 0.85), aCam = normalize(vViewPosition);
+          for (int i = 0; i < NUM_DIR_LIGHTS; i++) {
+            float d = max(dot(nf, normalize(directionalLights[i].direction + aCam)), 0.0);
+            outgoingLight += directionalLights[i].color * uBrillo * (pow(d, 120.0) * 14.0 + pow(d, 16.0) * 0.4);
+          }
+        #endif
+        #include <opaque_fragment>`);
+  };
+  return m;
+}
+
+/**
+ * Translucidez simulada (más barata que transmission, que pide un render extra por frame):
+ * suma luz cuando la fuente queda detrás de la pieza (contraluz) y un borde claro en los contornos,
+ * teñidos con el color de la superficie, como la luz que atraviesa un tejido fino.
+ * @param {THREE.MeshPhysicalMaterial} m @param {number} fuerza
+ */
+function translucidez(m, fuerza) {
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTransluc = { value: fuerza };
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float uTransluc;')
+      .replace('#include <opaque_fragment>', `
+        #if NUM_DIR_LIGHTS > 0
+          vec3 aCam = normalize(vViewPosition);
+          float borde = pow(1.0 - abs(dot(normal, aCam)), 3.0);
+          vec3 tinte = diffuseColor.rgb * vec3(1.05, 1.15, 0.8);
+          for (int i = 0; i < NUM_DIR_LIGHTS; i++) {
+            vec3 Ld = directionalLights[i].direction;
+            float atras = pow(max(dot(-Ld, aCam), 0.0), 2.0) * (0.5 - 0.5 * dot(normal, Ld));
+            outgoingLight += directionalLights[i].color * tinte * uTransluc * (atras * 0.7 + borde * 0.25);
+          }
+        #endif
+        #include <opaque_fragment>`);
+  };
+}
+
 /** @param {Semilla} v @returns {THREE.Group} */
 export function construirCogollo(v) {
-  const p = paleta(v), r = p.r, F = p.F;
+  const p = paleta(v), r = p.r, F = p.F, T = texturas();
   const L = F.L * (0.9 + r() * 0.2), W = F.W * (0.9 + r() * 0.2);
   const radio = (y) => { // perfil del cogollo según la altura y∈[0,1]
     const base = Math.pow(Math.sin(Math.PI * Math.min(1, y * 0.94 + 0.06)), 0.55) * (1 - 0.4 * y);
@@ -93,7 +221,7 @@ export function construirCogollo(v) {
   for (let i = 0; i <= 40; i++) { const y = i / 40; perfil.push(new THREE.Vector2(radio(y) * 0.7, y * L - L / 2)); }
   perfil.push(new THREE.Vector2(0.001, L / 2 + 0.02));
   const nucleo = new THREE.Mesh(new THREE.LatheGeometry(perfil, 18),
-    new THREE.MeshStandardMaterial({ color: p.verde.clone().multiplyScalar(0.55), roughness: 0.9 }));
+    new THREE.MeshStandardMaterial({ color: p.verde.clone().multiplyScalar(0.55), roughness: 0.9, normalMap: T.caliz.normal }));
   g.add(nucleo);
 
   // Tallo
@@ -103,7 +231,11 @@ export function construirCogollo(v) {
 
   // Cálices: filotaxis con ángulo áureo
   const N = Math.round(560 * F.dens * (L / 1.9));
-  const matCaliz = new THREE.MeshPhysicalMaterial({ roughness: 0.62, sheen: 1, sheenRoughness: 0.45, sheenColor: new THREE.Color(0xf1efe2).multiplyScalar(0.5 + p.escarcha * 0.5) });
+  const matCaliz = new THREE.MeshPhysicalMaterial({
+    roughness: 0.85, roughnessMap: T.caliz.rugosidad, normalMap: T.caliz.normal, normalScale: new THREE.Vector2(0.4, 0.4),
+    sheen: 1, sheenRoughness: 0.45, sheenColor: new THREE.Color(0xf1efe2).multiplyScalar(0.5 + p.escarcha * 0.5),
+  });
+  translucidez(matCaliz, 0.55);
   const caliz = new THREE.InstancedMesh(GEO.caliz, matCaliz, N);
   const datosCaliz = [];
   const GOLD = Math.PI * (3 - Math.sqrt(5));
@@ -123,7 +255,11 @@ export function construirCogollo(v) {
   g.add(caliz);
 
   // Hojas de azúcar (escarchadas)
-  const matHoja = new THREE.MeshPhysicalMaterial({ color: p.verde.clone().offsetHSL(0, -0.05, 0.04).lerp(blanco, 0.2 + p.escarcha * 0.25), side: THREE.DoubleSide, roughness: 0.7, sheen: 0.8, sheenColor: new THREE.Color(0xffffff) });
+  const matHoja = new THREE.MeshPhysicalMaterial({
+    color: p.verde.clone().offsetHSL(0, -0.05, 0.04).lerp(blanco, 0.2 + p.escarcha * 0.25), side: THREE.DoubleSide,
+    roughness: 1, roughnessMap: T.hoja.rugosidad, normalMap: T.hoja.normal, sheen: 0.8, sheenColor: new THREE.Color(0xffffff),
+  });
+  translucidez(matHoja, 0.8);
   const nh = F.hojas + Math.round(r() * 5);
   const bx = new THREE.Vector3(), bz = new THREE.Vector3();
   for (let i = 0; i < nh; i++) {
@@ -162,8 +298,8 @@ export function construirCogollo(v) {
   g.add(pist);
 
   // Tricomas: puntitos brillantes sobre los cálices
-  const NT = Math.round(2400 * p.escarcha);
-  const tric = new THREE.InstancedMesh(GEO.tricoma, new THREE.MeshStandardMaterial({ color: 0xf6f3e8, roughness: 0.22, metalness: 0 }), NT);
+  const NT = Math.round(4500 * p.escarcha);
+  const tric = new THREE.InstancedMesh(GEO.tricoma, materialTricomas(0.6 + p.escarcha * 0.8), NT);
   const rnd = new THREE.Vector3();
   q.identity();
   for (let i = 0; i < NT; i++) {
@@ -171,7 +307,7 @@ export function construirCogollo(v) {
     rnd.set(r() - 0.5, r() - 0.5, r() - 0.5).normalize();
     if (rnd.dot(k.dir) < 0) rnd.negate();
     pos.copy(k.pos).addScaledVector(rnd, k.s * (0.38 + r() * 0.1)).addScaledVector(k.dir, k.s * r() * 0.5);
-    sc.setScalar(W * (0.008 + r() * 0.007));
+    sc.setScalar(W * (0.006 + r() * 0.006));
     m4.compose(pos, q, sc);
     tric.setMatrixAt(i, m4);
   }

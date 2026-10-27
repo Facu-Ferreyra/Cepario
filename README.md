@@ -144,6 +144,10 @@ Los tipos completos (`Variedad`, `Resumen`, `Fuente`, `Aporte`…) están docume
 El modelo 3D es una representación estilizada generada a partir del tipo y una semilla por
 variedad: no representa la apariencia real.
 
+En computadoras el visor suma oclusión ambiental y profundidad de campo. En pantallas táctiles,
+con "reducir movimiento" o si el visor baja de 50 FPS, se dibuja sin esos efectos. Para probar:
+`?fps` muestra un contador de FPS y `?post=1` / `?post=0` fuerza los efectos (sin apagado automático).
+
 ## Licencias
 
 - **Código** (`index.html`, `styles.css`, `js/`, `scripts/`): [Apache License 2.0](LICENSE). Ver también [NOTICE](NOTICE).
