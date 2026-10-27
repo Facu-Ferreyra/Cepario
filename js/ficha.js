@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Ficha de la variedad (panel derecho): datos con su fuente, linaje y botón "Ver de cerca".
-import { DB, bySlug, hijos } from './datos.js';
+import { DB, bySlug, hijos, cargarDetalle, esc } from './datos.js';
 import { swatchCSS } from './bud.js';
 import { fichaHTML, caption } from './ficha-html.js';
 import { setBotonCerca, alternarCerca } from './viewer.js';
@@ -20,12 +20,18 @@ const ctx = {
   variedad: (s) => bySlug.get(s),
   hijosDe: (s) => hijos.get(s) || [],
   enlace: urlVariedad,
-  swatch: swatchCSS,
+  swatch: (v) => swatchCSS(bySlug.get(v.id) || v),   // la paleta sale del resumen (id + tipo)
 };
 
-let swapTimer = 0;
-export function pintarFicha(v, animar) {
-  const llenar = () => {
+let swapTimer = 0, pedido = 0;
+/**
+ * Pinta la ficha de una variedad. El detalle (data/v/<slug>.json) se pide mientras corre la
+ * animación de salida; si ya estaba precargado, aparece sin espera.
+ */
+export function pintarFicha(slug, animar) {
+  const n = ++pedido;                 // si el usuario ya pasó a otra variedad, se ignora esta respuesta
+  const detalle = cargarDetalle(slug);
+  const llenar = (v) => {
     article.innerHTML = fichaHTML(v, ctx);
     article.classList.remove('out');
     [...article.children].forEach((c, i) => { c.style.setProperty('--i', i); c.classList.add('enter'); });
@@ -33,12 +39,19 @@ export function pintarFicha(v, animar) {
     $('caption').textContent = caption(v, ctx);
     $('detail').scrollTop = 0;
   };
+  const fallar = () => {
+    article.innerHTML = `<p class="notice">No se pudo cargar la ficha de ${esc(bySlug.get(slug)?.nombre || slug)}. Revisá la conexión y volvé a elegirla.</p>`;
+    article.classList.remove('out');
+    setBotonCerca(null);
+    $('caption').textContent = '';
+  };
+  const mostrar = () => detalle.then((v) => { if (n === pedido) llenar(v); }, () => { if (n === pedido) fallar(); });
   clearTimeout(swapTimer);
-  if (!animar) { llenar(); return; }
+  if (!animar) { mostrar(); return; }
   [...article.children].forEach((c) => c.classList.remove('enter'));
   void article.offsetWidth;
   article.classList.add('out');
-  swapTimer = setTimeout(llenar, RM ? 0 : 200);
+  swapTimer = setTimeout(mostrar, RM ? 0 : 200);
 }
 
 /** Clicks dentro de la ficha: chips de linaje (navegan) y "Ver de cerca" (zoom). */

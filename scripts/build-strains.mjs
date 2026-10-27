@@ -5,20 +5,23 @@
 //   1. data/importados/*.json  datos importados de fuentes externas (hoy: Kushy)
 //   2. data/fuentes.json       fuentes declaradas por quienes aportan
 //   3. data/aportes/<slug>.json aportes de la comunidad, uno por variedad
-// Y a partir de data/strains.json genera las páginas estáticas v/<slug>/index.html y sitemap.xml.
+// Además genera lo que carga el sitio: data/indice.json (resumen de todas las variedades) y
+// data/v/<slug>.json (detalle de cada una). data/strains.json queda como descarga completa.
+// Y a partir de los mismos datos genera las páginas estáticas v/<slug>/index.html y sitemap.xml.
 // Uso:  node scripts/build-strains.mjs
 //
 // Regla de combinación: si un aporte trae un campo, reemplaza al importado (el campo entero).
 // Un aporte para un slug que no existe crea una variedad nueva (y entonces debe traer "nombre").
 // El resultado es determinístico: correrlo dos veces da el mismo archivo.
 
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   DIR_DATA, DIR_IMPORTADOS, DIR_APORTES, ARCHIVO_FUENTES, CAMPOS, CAMPOS_FICHA,
   leerJSON, listarJSON, ordenarPorNombre,
 } from './lib/datos.mjs';
 import { generarPaginas } from './lib/paginas.mjs';
+import { resumir } from '../js/datos.js';
 
 const errores = [];
 
@@ -90,6 +93,16 @@ const json = `{"version":1,"campos":${JSON.stringify(CAMPOS_FICHA)},` +
   `"fuentes":${JSON.stringify(fuentesUsadas)},\n"variedades":[\n` +
   variedades.map((v) => JSON.stringify(v)).join(',\n') + '\n]}\n';
 writeFileSync(join(DIR_DATA, 'strains.json'), json);
+
+// Nivel 1: índice liviano para buscador, filtros y navegación (más las fuentes, que usa toda ficha)
+writeFileSync(join(DIR_DATA, 'indice.json'), `{"version":1,"fuentes":${JSON.stringify(fuentesUsadas)},\n"variedades":[\n` +
+  variedades.map((v) => JSON.stringify(resumir(v))).join(',\n') + '\n]}\n');
+
+// Nivel 2: una ficha completa por archivo. Se borra la carpeta para no dejar variedades viejas.
+const DIR_DETALLE = join(DIR_DATA, 'v');
+rmSync(DIR_DETALLE, { recursive: true, force: true });
+mkdirSync(DIR_DETALLE, { recursive: true });
+for (const v of variedades) writeFileSync(join(DIR_DETALLE, `${v.id}.json`), JSON.stringify(v) + '\n');
 
 const paginas = generarPaginas({ fuentes: fuentesUsadas, variedades });
 

@@ -19,7 +19,7 @@ const FORMA = {
 };
 export function paleta(v) {
   const r = rngFrom(hashStr(v.id));
-  const tipo = v.tipo?.valor || 'hibrida';
+  const tipo = v.tipo || 'hibrida';
   const F = FORMA[tipo];
   const verde = new THREE.Color().setHSL(0.23 + r() * 0.08, 0.42 + r() * 0.18, F.luz + (r() - 0.5) * 0.06);
   const morado = r() < F.morado ? 0.35 + r() * 0.5 : 0;

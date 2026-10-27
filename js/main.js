@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Punto de entrada: carga los datos, filtros, navegación anterior/siguiente, enlaces #slug y aviso de edad.
-import { DB, bySlug, indexar, pasaFiltro, nf, TIPO_TXT, FILTRO_TXT, MUESTRA } from './datos.js';
+import { DB, bySlug, indexar, pasaFiltro, nf, TIPO_TXT, FILTRO_TXT, MUESTRA, resumir, guardarDetalles, precargar } from './datos.js';
 import { swatchCSS } from './bud.js';
 import { mostrarVariedad, salirDeFoco, arrancarVisor } from './viewer.js';
 import { pintarFicha, iniciarFicha, urlVariedad } from './ficha.js';
@@ -11,7 +11,7 @@ import { iniciarBuscador, cerrarBusqueda } from './search.js';
 const $ = (id) => document.getElementById(id);
 const hero = $('hero'), stage = $('stage'), loaderEl = $('loader');
 // Rutas relativas a este archivo (js/), no a la página: así funcionan desde cualquier carpeta
-const URL_DATOS = new URL('../data/strains.json', import.meta.url);
+const URL_INDICE = new URL('../data/indice.json', import.meta.url);
 
 let filtro = 'todas', lista = [], active = null;
 
@@ -31,6 +31,11 @@ function actualizarContador() {
   const i = lista.indexOf(active);
   $('pos').textContent = i >= 0 ? `${nf.format(i + 1)} de ${nf.format(lista.length)}` : `${nf.format(lista.length)} variedades`;
   $('prev').disabled = $('next').disabled = lista.length < 2;
+  // Precarga las fichas vecinas: así anterior/siguiente no espera a la red
+  if (i >= 0 && lista.length > 1) {
+    precargar(lista[(i + 1) % lista.length]);
+    precargar(lista[(i - 1 + lista.length) % lista.length]);
+  }
 }
 function paso(d) {
   if (!lista.length) return;
@@ -67,8 +72,8 @@ function seleccionar(slug, dir = 1) {
   if (!v || slug === active) return;
   const primera = active === null;
   active = slug;
-  mostrarVariedad(v, dir);
-  pintarFicha(v, !primera);
+  mostrarVariedad(v, dir);          // el modelo 3D solo necesita el resumen (id y tipo)
+  pintarFicha(slug, !primera);      // la ficha pide el detalle
   actualizarContador();
   // La URL pasa a ser la página estática de la variedad (v/<slug>/), sin recargar
   document.title = `${v.nombre} · Cepario`;
@@ -93,7 +98,7 @@ function edad() {
 }
 
 function variedadDelDia() {
-  const ricas = DB.variedades.filter((v) => v.sabores && v.efectos);
+  const ricas = DB.variedades.filter((v) => v.datos === 2);
   const pool = ricas.length ? ricas : DB.variedades;
   const dia = Math.floor(Date.now() / 86400000);
   return pool[dia % pool.length];
@@ -103,17 +108,20 @@ async function iniciar() {
   edad();
   loaderEl.classList.add('show');
   arrancarVisor();
+  // En v/<slug>/ ya sabemos qué ficha hace falta: se pide en paralelo con el índice
+  if (hero.dataset.slug && !slugDelHash()) precargar(hero.dataset.slug);
   let db;
   try {
-    const res = await fetch(URL_DATOS);
+    const res = await fetch(URL_INDICE);
     if (!res.ok) throw new Error(res.status);
     db = await res.json();
   } catch (err) {
-    console.warn('No se pudo cargar data/strains.json', err);
-    db = MUESTRA;
+    console.warn('No se pudo cargar data/indice.json', err);
+    db = { fuentes: MUESTRA.fuentes, variedades: MUESTRA.variedades.map(resumir) };
+    guardarDetalles(MUESTRA.variedades);
     const n = $('notice');
     n.hidden = false;
-    n.textContent = 'No se pudo cargar data/strains.json. Si abriste el archivo con doble clic, servilo con un servidor local (por ejemplo: npx serve). Mostrando 3 variedades de ejemplo.';
+    n.textContent = 'No se pudo cargar data/indice.json. Si abriste el archivo con doble clic, servilo con un servidor local (por ejemplo: npx serve). Mostrando 3 variedades de ejemplo.';
   }
   indexar(db);
   // Contadores de la barra lateral
@@ -124,7 +132,7 @@ async function iniciar() {
   const dia = variedadDelDia();
   $('featSw').style.background = swatchCSS(dia);
   $('featTitle').textContent = dia.nombre;
-  $('featText').textContent = [dia.tipo ? TIPO_TXT[dia.tipo.valor] : null, dia.criador?.valor].filter(Boolean).join(' · ') || 'Datos parciales';
+  $('featText').textContent = [dia.tipo ? TIPO_TXT[dia.tipo] : null, dia.criador].filter(Boolean).join(' · ') || 'Datos parciales';
   $('featGo').addEventListener('click', () => irA(dia.id));
   aplicarFiltro('todas', false);
   loaderEl.classList.remove('show');

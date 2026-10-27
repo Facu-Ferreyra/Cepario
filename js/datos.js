@@ -22,22 +22,60 @@ export const MUESTRA = {
   ],
 };
 
-export let DB = null;                 // { fuentes, variedades }
-export const bySlug = new Map();      // slug -> variedad
+// Los datos se cargan en dos niveles:
+//  - data/indice.json: una entrada liviana por variedad (resumen), para el buscador, los filtros
+//    y la navegación. Es lo único que se descarga al abrir el sitio.
+//  - data/v/<slug>.json: la variedad completa (con fuentes), que se pide al abrir su ficha.
+export let DB = null;                 // { fuentes, variedades: resúmenes }
+export const bySlug = new Map();      // slug -> resumen
 export const hijos = new Map();       // slug -> [slugs de variedades que la tienen como padre]
 
 export const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 export const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const nf = new Intl.NumberFormat('es-AR');
+/** ¿La variedad completa tiene algún dato además de tipo, criador y linaje? */
 export const tieneDatos = (v) => !!(v.sabores || v.efectos || v.thc || v.cbd || v.floracion || v.terpenos);
-export const pasaFiltro = (v, f) => f === 'todas' || (f === 'datos' ? tieneDatos(v) : v.tipo?.valor === f);
+export const pasaFiltro = (r, f) => f === 'todas' || (f === 'datos' ? (r.datos || 0) > 0 : r.tipo === f);
+
+/**
+ * Variedad completa -> entrada del índice. La usa el build para escribir data/indice.json.
+ * "datos": 1 si tiene algún dato (filtro "Con más datos"), 2 si además tiene sabores y efectos
+ * (candidata a "Variedad del día"). Se omite cuando es 0, igual que los campos vacíos.
+ */
+export function resumir(v) {
+  const r = { id: v.id, nombre: v.nombre };
+  if (v.tipo) r.tipo = v.tipo.valor;
+  if (v.criador) r.criador = v.criador.valor;
+  const datos = v.sabores && v.efectos ? 2 : tieneDatos(v) ? 1 : 0;
+  if (datos) r.datos = datos;
+  if (v.padres) r.padres = v.padres.valor;
+  return r;
+}
 
 export function indexar(db) {
   DB = db;
   bySlug.clear(); hijos.clear();
-  for (const v of db.variedades) { v._n = norm(v.nombre); v._c = v.criador ? norm(v.criador.valor) : ''; bySlug.set(v.id, v); }
-  for (const v of db.variedades) for (const p of v.padres?.valor || []) {
+  for (const r of db.variedades) { r._n = norm(r.nombre); r._c = r.criador ? norm(r.criador) : ''; bySlug.set(r.id, r); }
+  for (const r of db.variedades) for (const p of r.padres || []) {
     if (!hijos.has(p)) hijos.set(p, []);
-    hijos.get(p).push(v.id);
+    hijos.get(p).push(r.id);
   }
 }
+
+/* ---------- Detalle de cada variedad (segundo nivel) ---------- */
+const detalles = new Map();           // slug -> Promise<variedad completa>
+
+/** Pide data/v/<slug>.json una sola vez; los pedidos siguientes reusan la misma promesa. */
+export function cargarDetalle(slug) {
+  if (!detalles.has(slug)) {
+    const p = fetch(new URL(`../data/v/${encodeURIComponent(slug)}.json`, import.meta.url))
+      .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); });
+    p.catch(() => detalles.delete(slug));   // si falla, el próximo intento vuelve a pedirlo
+    detalles.set(slug, p);
+  }
+  return detalles.get(slug);
+}
+/** Precarga sin mostrar errores (la usamos para las variedades vecinas). */
+export function precargar(slug) { if (slug) cargarDetalle(slug).catch(() => {}); }
+/** Para el respaldo MUESTRA: detalles que ya tenemos en memoria. */
+export function guardarDetalles(variedades) { for (const v of variedades) detalles.set(v.id, Promise.resolve(v)); }

@@ -19,13 +19,15 @@ js/ficha.js                    Ficha de la variedad (pinta y maneja clicks)
 js/ficha-html.js               HTML de la ficha (lo usan el navegador y el build)
 v/<slug>/index.html            Página estática por variedad (GENERADA)
 sitemap.xml                    Mapa del sitio para buscadores (GENERADO)
-data/strains.json              Datos finales GENERADOS (no editar a mano)
+data/strains.json              Datos finales completos GENERADOS (descarga del dataset)
+data/indice.json               Resumen de todas las variedades, lo que carga el sitio (GENERADO)
+data/v/<slug>.json             Ficha completa de cada variedad (GENERADO)
 data/importados/kushy.json     Kushy ya limpiado (generado desde el CSV)
 data/aportes/<slug>.json       Aportes de la comunidad, uno por variedad
 data/fuentes.json              Fuentes que usan los aportes
 data/licencias/                Licencias de las fuentes de datos
 scripts/importar-kushy.mjs     CSV de Kushy -> data/importados/kushy.json
-scripts/build-strains.mjs      importados + aportes -> data/strains.json, v/ y sitemap.xml
+scripts/build-strains.mjs      importados + aportes -> strains.json, indice.json, data/v/, v/ y sitemap.xml
 scripts/validate.mjs           Valida aportes y fuentes (lo corre el CI)
 schema/                        JSON Schema de aportes y fuentes
 .github/workflows/datos.yml    CI: validación + build en cada pull request
@@ -63,6 +65,16 @@ git clone https://github.com/kushyapp/cannabis-dataset
 node scripts/importar-kushy.mjs cannabis-dataset/Dataset/Strains/strains-kushy_api.2017-11-14.csv
 node scripts/build-strains.mjs
 ```
+
+## Cómo carga los datos el sitio
+
+1. Al abrir, solo se descarga `data/indice.json`: id, nombre, tipo y criador de cada variedad, más
+   `datos` (1 = tiene algún dato, 2 = tiene sabores y efectos) y `padres`. Con eso funcionan el
+   buscador, los filtros, el contador, la variedad del día y el modelo 3D.
+2. La ficha completa (`data/v/<slug>.json`) se pide al mostrar la variedad. Las vecinas (anterior y
+   siguiente) se precargan, así que pasar de una a otra no espera a la red.
+
+`data/strains.json` sigue generándose para quien quiera descargar el dataset completo.
 
 ## Formato de cada variedad
 
