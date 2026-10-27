@@ -8,7 +8,14 @@ Cada dato muestra de qué fuente viene y con qué licencia.
 ## Estructura
 
 ```
-index.html                     Página completa (CSS + un módulo JS inline)
+index.html                     Página (solo HTML)
+styles.css                     Estilos
+js/main.js                     Arranque: carga de datos, filtros, navegación, aviso de edad
+js/datos.js                    Estado compartido y utilidades (variedades, índices, textos)
+js/bud.js                      Generador procedural del cogollo (Three.js)
+js/viewer.js                   Escena 3D, cámara, interacción y transiciones
+js/search.js                   Buscador (combobox accesible)
+js/ficha.js                    Ficha de la variedad
 data/strains.json              Datos finales GENERADOS (no editar a mano)
 data/importados/kushy.json     Kushy ya limpiado (generado desde el CSV)
 data/aportes/<slug>.json       Aportes de la comunidad, uno por variedad
@@ -76,7 +83,7 @@ variedad: no representa la apariencia real.
 
 ## Licencias
 
-- **Código** (`index.html`, `scripts/`): [Apache License 2.0](LICENSE). Ver también [NOTICE](NOTICE).
+- **Código** (`index.html`, `styles.css`, `js/`, `scripts/`): [Apache License 2.0](LICENSE). Ver también [NOTICE](NOTICE).
 - **Datos** (`data/`): [Open Database License (ODbL) 1.0](data/LICENSE);
   contenidos individuales bajo DbCL 1.0.
 - **Datos de Kushy**: MIT, aviso conservado en `data/licencias/kushy-LICENSE.txt`.
