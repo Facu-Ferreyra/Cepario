@@ -14,7 +14,7 @@ import { TIPO_TXT, esc } from '../../js/datos.js';
 // Sin JS, el visor, los filtros y el buscador no hacen nada: se ocultan y la ficha queda como
 // una página normal con scroll (en escritorio y en el celular)
 const NOSCRIPT = '<noscript><style>html,body{height:auto}body{overflow:auto}.hero{height:auto;min-height:100vh}' +
-  '.main,.nav,.feat,.top,.closeup,#mSearch{display:none}.card{max-height:none;overflow:visible}</style></noscript>';
+  '.main,.side-t,.nav,.feat,.top,.closeup,#mSearch{display:none}.card{max-height:none;overflow:visible}</style></noscript>';
 
 function reemplazar(html, buscado, nuevo) {
   if (!html.includes(buscado)) throw new Error(`index.html cambió: no encuentro ${buscado}`);
@@ -44,6 +44,7 @@ export function generarPaginas(db) {
   plantilla = reemplazar(plantilla, '</head>', `${NOSCRIPT}\n</head>`);
 
   const bySlug = new Map(db.variedades.map((v) => [v.id, v]));
+  const numeros = new Map(db.variedades.map((v, i) => [v.id, i + 1]));   // mismo orden que data/indice.json
   const hijos = new Map();
   for (const v of db.variedades) for (const p of v.padres?.valor || []) {
     if (!hijos.has(p)) hijos.set(p, []);
@@ -55,17 +56,17 @@ export function generarPaginas(db) {
     variedad: (s) => bySlug.get(s),
     hijosDe: (s) => hijos.get(s) || [],
     enlace: (s) => `../${s}/`,
-    swatch: () => 'var(--sage-tint)',   // el color real lo calcula Three.js al cargar el visor
+    numero: (s) => numeros.get(s) ?? 0,
   };
 
   // Se borra todo v/ para que no queden páginas de variedades que ya no existen
   rmSync(DIR_PAGINAS, { recursive: true, force: true });
   for (const v of db.variedades) {
     let html = plantilla;
-    html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${esc(v.nombre)} · Cepario</title>`);
+    html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${esc(v.nombre)}, en Cepario</title>`);
     html = html.replace(/<meta name="description" content="[^"]*">/, () => `<meta name="description" content="${esc(descripcion(v))}">`);
     html = html.replace(/<link rel="canonical" href="[^"]*">/, () => `<link rel="canonical" href="${URL_SITIO}v/${v.id}/">`);
-    html = reemplazar(html, '<div class="hero" id="hero" data-light="day">', `<div class="hero" id="hero" data-light="day" data-slug="${esc(v.id)}">`);
+    html = reemplazar(html, '<div class="hero" id="hero">', `<div class="hero" id="hero" data-slug="${esc(v.id)}">`);
     html = reemplazar(html, '<article id="article" aria-live="polite"></article>', `<article id="article" aria-live="polite">${fichaHTML(v, ctx)}</article>`);
     html = reemplazar(html, '<p class="caption" id="caption"></p>', `<p class="caption" id="caption">${esc(caption(v, ctx))}</p>`);
     mkdirSync(join(DIR_PAGINAS, v.id), { recursive: true });

@@ -66,7 +66,7 @@ export function resumir(v) {
 export function indexar(db) {
   DB = db;
   bySlug.clear(); hijos.clear();
-  for (const r of db.variedades) { r._n = norm(r.nombre); r._c = r.criador ? norm(r.criador) : ''; bySlug.set(r.id, r); }
+  db.variedades.forEach((r, i) => { r._n = norm(r.nombre); r._c = r.criador ? norm(r.criador) : ''; r._i = i + 1; bySlug.set(r.id, r); });
   for (const r of db.variedades) for (const p of r.padres || []) {
     if (!hijos.has(p)) hijos.set(p, []);
     hijos.get(p).push(r.id);

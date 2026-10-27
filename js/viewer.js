@@ -175,7 +175,7 @@ function contarFrame(now) {
   if (dur < 1000) return;
   const valor = fps.n * 1000 / dur;
   fps.t0 = now; fps.n = 0;
-  if (hud) hud.textContent = `${valor.toFixed(0)} FPS · ${post ? 'con' : 'sin'} postprocesado`;
+  if (hud) hud.textContent = `${valor.toFixed(0)} FPS, ${post ? 'con' : 'sin'} postprocesado`;
   if (dur > 1500 || !post || PARAMS.has('post') || now - post.desde < 3000) return;   // pestaña en pausa o recién activado: no cuenta
   fps.lentos = valor < 47.5 ? fps.lentos + 1 : 0;   // margen para monitores de 50 Hz
   if (fps.lentos >= 3) desactivarPost();
@@ -276,10 +276,15 @@ stage.addEventListener('keydown', (e) => {
 btnZin.addEventListener('click', () => { interact(); homing = false; setZoom(tzoom * 1.35); });
 btnZout.addEventListener('click', () => { interact(); homing = false; setZoom(tzoom / 1.35); });
 btnExpand.addEventListener('click', () => { interact(); setFocus(!focusMode); });
+// Tema: "papel" (claro) o "frasco" (oscuro). Sin elección guardada, sigue al sistema.
+// El <head> ya aplicó la elección guardada antes de pintar, para que no haya un destello claro.
+const html = document.documentElement, SISTEMA_OSCURO = matchMedia('(prefers-color-scheme: dark)');
+dusk = html.dataset.tema ? html.dataset.tema === 'frasco' : SISTEMA_OSCURO.matches;
+SISTEMA_OSCURO.addEventListener('change', (e) => { if (!html.dataset.tema) dusk = e.matches; });
 btnLight.addEventListener('click', () => {
   interact(); dusk = !dusk;
-  hero.dataset.light = $('gate').dataset.light = dusk ? 'dusk' : 'day';
-  document.body.style.background = dusk ? '#14170f' : '';
+  html.dataset.tema = dusk ? 'frasco' : 'papel';
+  try { localStorage.setItem('cepario-tema', html.dataset.tema); } catch { /* sin almacenamiento: vale para esta visita */ }
 });
 $('tl').addEventListener('click', () => { interact(); homing = false; turnQueue -= Math.PI / 2; });
 $('tr').addEventListener('click', () => { interact(); homing = false; turnQueue += Math.PI / 2; });

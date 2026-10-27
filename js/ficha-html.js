@@ -3,7 +3,8 @@
 
 // HTML de la ficha. Módulo "puro" (sin DOM ni Three.js): lo usan el navegador (js/ficha.js) y
 // el build de Node (scripts/lib/paginas.mjs), así la página estática y la dinámica son idénticas.
-import { CAMPOS, TIPO_TXT, esc, nf, tieneDatos } from './datos.js';
+// La ficha es una etiqueta de herbario: cada dato dice quién lo determinó ("Det.") según su fuente.
+import { CAMPOS, TIPO_TXT, esc, nf } from './datos.js';
 
 /**
  * @typedef {object} ContextoFicha
@@ -11,56 +12,62 @@ import { CAMPOS, TIPO_TXT, esc, nf, tieneDatos } from './datos.js';
  * @property {(slug: string) => ({ id: string, nombre: string } | undefined)} variedad  Busca por slug
  * @property {(slug: string) => string[]} hijosDe   Slugs de las variedades que la tienen como padre
  * @property {(slug: string) => string} enlace       URL de la página de una variedad
- * @property {(v: import('./tipos.js').Variedad) => string} swatch  Fondo CSS de la muestra de color
+ * @property {(slug: string) => number} numero       Número de ejemplar: posición en el catálogo completo (desde 1)
  */
 
-function fuenteBadge(d, fuentes) {
+/** "Det. Kushy, 2017": quién determinó el dato. El nombre completo y la licencia van en el title. */
+function determino(d, fuentes) {
   const f = fuentes[d.fuente];
-  const t = f ? `Fuente: ${f.nombre} · ${f.licencia} · ${f.fecha}` : `Fuente: ${d.fuente}`;
-  return `<span class="src" title="${esc(t)}">${esc(f ? f.nombre.split(' ')[0] : d.fuente)}</span>`;
+  if (!f) return `<span class="det"><abbr title="Determinó">Det.</abbr> ${esc(d.fuente)}</span>`;
+  return `<span class="det" title="${esc(`${f.nombre}, licencia ${f.licencia}, ${f.fecha}`)}"><abbr title="Determinó">Det.</abbr> ${esc(f.nombre.split(' ')[0])}, ${esc(f.fecha.slice(0, 4))}</span>`;
 }
 function valorHTML(campo, d) {
   const x = d.valor;
-  if (Array.isArray(x)) return x.map((s) => `<span class="pill">${esc(s)}</span>`).join('');
-  if (campo === 'genetica' && typeof x === 'object') return `${x.indica ?? '?'}% índica · ${x.sativa ?? '?'}% sativa`;
+  if (Array.isArray(x)) return esc(x.join(', '));
+  if (campo === 'genetica' && typeof x === 'object') return `${x.indica ?? '?'} % índica, ${x.sativa ?? '?'} % sativa`;
   if ((campo === 'thc' || campo === 'cbd') && typeof x === 'object') return `${x.min}–${x.max} %`;
   if (campo === 'thc' || campo === 'cbd') return `${x} %`;
   if (campo === 'floracion' && typeof x === 'object') return `${x.min}–${x.max} semanas`;
   if (campo === 'floracion') return `${x} semanas`;
   return esc(x);
 }
+const fila = (etiqueta, d, fuentes, valor) => `<div class="et-fila"><dt>${etiqueta}</dt><dd>${valor}${determino(d, fuentes)}</dd></div>`;
+const lista = new Intl.ListFormat('es', { type: 'conjunction' });
+const enMinuscula = (s) => (s === s.toUpperCase() ? s : s.toLowerCase());   // "THC" queda igual
 
 /** @param {import('./tipos.js').Variedad} v @param {ContextoFicha} ctx @returns {string} */
 export function fichaHTML(v, ctx) {
-  const tipo = v.tipo ? TIPO_TXT[v.tipo.valor] : 'Tipo sin registrar';
-  const filas = CAMPOS.map(([campo, etiqueta, icono]) => {
-    const d = v[campo];
-    const val = d ? `<span class="val">${valorHTML(campo, d)} ${fuenteBadge(d, ctx.fuentes)}</span>` : '<span class="none">Sin datos verificados</span>';
-    return `<div class="row"><svg class="ic"><use href="#i-${icono}"/></svg><span class="lab">${etiqueta}</span>${val}</div>`;
-  }).join('');
+  const tipo = v.tipo?.valor;
+  // Los datos determinados van en filas; los que faltan, juntos en una línea al final
+  const presentes = CAMPOS.filter(([c]) => v[c]), faltan = CAMPOS.filter(([c]) => !v[c]).map(([, e]) => e);
+  if (!v.tipo) faltan.unshift('Tipo');
+  const filas = (v.tipo ? fila('Tipo', v.tipo, ctx.fuentes, TIPO_TXT[tipo]) : '') +
+    presentes.map(([campo, etiqueta]) => fila(etiqueta, v[campo], ctx.fuentes, valorHTML(campo, v[campo]))).join('');
+  const sinDeterminar = faltan.length
+    ? `<p class="et-faltan">Sin determinar: ${esc(lista.format(faltan.map((e, i) => (i ? enMinuscula(e) : e))))}.</p>` : '';
   const padres = (v.padres?.valor || []).map(ctx.variedad).filter(Boolean);
   const hs = ctx.hijosDe(v.id).map(ctx.variedad).filter(Boolean);
-  const chip = (x) => `<a href="${esc(ctx.enlace(x.id))}" data-slug="${esc(x.id)}">${esc(x.nombre)}</a>`;
+  const enlace = (x) => `<a href="${esc(ctx.enlace(x.id))}" data-slug="${esc(x.id)}">${esc(x.nombre)}</a>`;
   let linaje = '';
-  if (padres.length) linaje += `<p class="lnote">Cruce de:</p><div class="lineage">${padres.map(chip).join('')}</div>`;
-  if (hs.length) linaje += `<p class="lnote">Progenitora de ${nf.format(hs.length)} variedad${hs.length > 1 ? 'es' : ''}:</p><div class="lineage">${hs.slice(0, 8).map(chip).join('')}</div>`;
-  if (!linaje) linaje = '<p class="lnote">Sin cruces registrados.</p>';
+  if (padres.length) linaje += `<p>Cruce de ${padres.map(enlace).join(' × ')}.${v.padres ? ` ${determino(v.padres, ctx.fuentes)}` : ''}</p>`;
+  if (hs.length) {
+    const mas = hs.length > 8 ? `, y ${nf.format(hs.length - 8)} más` : '';
+    linaje += `<p>Progenitora de ${hs.slice(0, 8).map(enlace).join(', ')}${mas}.</p>`;
+  }
+  if (!linaje) linaje = '<p class="none">Sin cruces registrados.</p>';
   const usadas = [...new Set(CAMPOS.map(([c]) => v[c]?.fuente).concat(v.tipo?.fuente, v.padres?.fuente).filter(Boolean))];
   const fuentes = usadas.map((k) => { const f = ctx.fuentes[k]; return f ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.nombre)}</a> (${esc(f.licencia)}, ${esc(f.fecha)})` : esc(k); }).join(', ');
   return `
-    <p class="eyebrow">${esc(tipo)}</p>
-    <h1>${esc(v.nombre)}</h1>
-    <div class="tags"><span>${esc(tipo)}</span>${v.criador ? `<span>${esc(v.criador.valor)}</span>` : ''}${tieneDatos(v) ? '<span>Ficha con datos</span>' : ''}</div>
-    <h2>Ficha</h2>
-    <div class="rows">${filas}</div>
+    <header class="et-cab">
+      <p>Herbario Cepario<br>Ejemplar n.º ${String(ctx.numero(v.id)).padStart(4, '0')}</p>
+      <svg class="sello" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><circle cx="24" cy="24" r="18.5"/><use href="#i-leaf" x="12" y="11" width="24" height="24"/></svg>
+    </header>
+    <h1 class="${tipo ? `t-${tipo}` : ''}">${esc(v.nombre)}</h1>
+    <dl class="et-datos">${filas}</dl>${sinDeterminar}
     <h2>Linaje</h2>
-    <div>${linaje}</div>
+    <div class="et-linaje">${linaje}</div>
     <p class="fine">Base de datos bajo <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>. Datos: ${fuentes || 'sin fuente'}. ${esc(ctx.fuentes.kushy?.copyright || '')} Información con fines informativos; no es consejo médico.</p>
-    <button type="button" class="closeup" aria-pressed="false">
-      <span class="swatch" style="background:${ctx.swatch(v)}"></span>
-      <span><b>Ver de cerca</b><small>Acercá la cámara para ver cálices, pistilos y tricomas.</small></span>
-      <svg class="ic chev"><use href="#i-chev"/></svg>
-    </button>`;
+    <button type="button" class="closeup" aria-pressed="false"><svg class="ic"><use href="#i-zoomin"/></svg>Ver de cerca</button>`;
 }
 
 /** Leyenda bajo el visor. @param {import('./tipos.js').Variedad} v @param {ContextoFicha} ctx */

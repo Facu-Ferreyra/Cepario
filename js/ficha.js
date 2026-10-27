@@ -3,7 +3,6 @@
 
 // Ficha de la variedad (panel derecho): datos con su fuente, linaje y botón "Ver de cerca".
 import { DB, bySlug, hijos, cargarDetalle, esc } from './datos.js';
-import { swatchCSS } from './bud.js';
 import { fichaHTML, caption } from './ficha-html.js';
 import { setBotonCerca, alternarCerca } from './viewer.js';
 
@@ -20,7 +19,7 @@ const ctx = {
   variedad: (s) => bySlug.get(s),
   hijosDe: (s) => hijos.get(s) || [],
   enlace: urlVariedad,
-  swatch: (v) => swatchCSS(bySlug.get(v.id) || v),   // la paleta sale del resumen (id + tipo)
+  numero: (s) => bySlug.get(s)?._i ?? 0,
 };
 
 let swapTimer = 0, pedido = 0;

@@ -28,7 +28,7 @@ function pintarResultados() {
     <li role="option" id="r${i}" data-slug="${esc(v.id)}" aria-selected="${i === activo}">
       <span class="swatch" style="background:${swatchCSS(v)}"></span>
       <span><b>${esc(v.nombre)}</b><small>${esc(v.criador || 'Criador sin registrar')}</small></span>
-      <span class="pill">${esc(v.tipo ? TIPO_TXT[v.tipo] : '—')}</span>
+      <span class="rtipo">${v.tipo ? `<i class="marca ${v.tipo}" aria-hidden="true"></i>${esc(TIPO_TXT[v.tipo])}` : 'Sin tipo'}</span>
     </li>`).join('') + `<li class="rmeta" role="presentation">${total ? (total > 30 ? `Mostrando 30 de ${nf.format(total)}+ resultados` : `${total} resultado${total > 1 ? 's' : ''}`) : 'Sin resultados'}</li>`;
   results.hidden = false;
   q.setAttribute('aria-expanded', 'true');

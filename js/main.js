@@ -3,7 +3,6 @@
 
 // Punto de entrada: carga los datos, filtros, navegación anterior/siguiente, enlaces #slug y aviso de edad.
 import { DB, bySlug, indexar, pasaFiltro, nf, TIPO_TXT, FILTRO_TXT, MUESTRA, resumir, guardarDetalles, precargar } from './datos.js';
-import { swatchCSS } from './bud.js';
 import { mostrarVariedad, salirDeFoco, arrancarVisor } from './viewer.js';
 import { pintarFicha, iniciarFicha, urlVariedad } from './ficha.js';
 import { iniciarBuscador, cerrarBusqueda } from './search.js';
@@ -76,7 +75,7 @@ function seleccionar(slug, dir = 1) {
   pintarFicha(slug, !primera);      // la ficha pide el detalle
   actualizarContador();
   // La URL pasa a ser la página estática de la variedad (v/<slug>/), sin recargar
-  document.title = `${v.nombre} · Cepario`;
+  document.title = `${v.nombre}, en Cepario`;
   try { history.replaceState(null, '', urlVariedad(slug)); } catch { /* algunos navegadores lo bloquean en file:// */ }
 }
 // Enlaces viejos con #slug: muestran la variedad y la URL se reescribe a v/<slug>/
@@ -127,12 +126,12 @@ async function iniciar() {
   // Contadores de la barra lateral
   for (const f of Object.keys(FILTRO_TXT)) {
     const el = document.querySelector(`[data-c="${f}"]`);
-    if (el) el.textContent = `${nf.format(db.variedades.filter((v) => pasaFiltro(v, f)).length)} variedades`;
+    if (el) el.textContent = nf.format(db.variedades.filter((v) => pasaFiltro(v, f)).length);
   }
   const dia = variedadDelDia();
-  $('featSw').style.background = swatchCSS(dia);
   $('featTitle').textContent = dia.nombre;
-  $('featText').textContent = [dia.tipo ? TIPO_TXT[dia.tipo] : null, dia.criador].filter(Boolean).join(' · ') || 'Datos parciales';
+  $('featText').textContent = dia.tipo && dia.criador ? `${TIPO_TXT[dia.tipo]}, de ${dia.criador}.`
+    : dia.tipo ? `${TIPO_TXT[dia.tipo]}.` : dia.criador ? `De ${dia.criador}.` : 'Datos parciales.';
   $('featGo').addEventListener('click', () => irA(dia.id));
   aplicarFiltro('todas', false);
   loaderEl.classList.remove('show');

@@ -71,6 +71,7 @@
  * @property {string[]} [padres]
  * @property {string} [_n]         Nombre normalizado para buscar (lo agrega indexar())
  * @property {string} [_c]         Criador normalizado para buscar (lo agrega indexar())
+ * @property {number} [_i]         Número de ejemplar: posición en el catálogo, desde 1 (lo agrega indexar())
  */
 
 /**
