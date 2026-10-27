@@ -1,0 +1,14 @@
+{
+  "name": "cepario",
+  "private": true,
+  "type": "module",
+  "description": "Atlas web de variedades de cannabis. El sitio no necesita build: estos scripts son solo para los datos.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "validar": "node scripts/validate.mjs",
+    "datos": "node scripts/build-strains.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0"
+  }
+}

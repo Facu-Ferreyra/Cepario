@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://facu-ferreyra.github.io/Cepario/schema/fuentes.schema.json",
+  "title": "Fuentes de aportes de Cepario",
+  "description": "Archivo data/fuentes.json: cada clave es el identificador que usan los aportes en \"fuente\".",
+  "type": "object",
+  "propertyNames": { "anyOf": [{ "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }, { "const": "$schema" }] },
+  "properties": { "$schema": { "type": "string" } },
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["nombre", "url", "licencia", "fecha"],
+    "properties": {
+      "nombre": { "type": "string", "minLength": 3, "maxLength": 100 },
+      "url": { "type": "string", "pattern": "^https://" },
+      "licencia": {
+        "description": "Solo licencias compatibles con publicar bajo ODbL. Nada de 'todos los derechos reservados'.",
+        "enum": ["ODbL-1.0", "DbCL-1.0", "PDDL-1.0", "CC0-1.0", "CC-BY-4.0", "MIT"]
+      },
+      "fecha": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Fecha de los datos (AAAA-MM-DD)." },
+      "copyright": { "type": "string", "maxLength": 200 },
+      "nota": { "type": "string", "maxLength": 300 }
+    }
+  }
+}

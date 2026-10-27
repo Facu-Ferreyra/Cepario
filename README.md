@@ -16,6 +16,9 @@ data/fuentes.json              Fuentes que usan los aportes
 data/licencias/                Licencias de las fuentes de datos
 scripts/importar-kushy.mjs     CSV de Kushy -> data/importados/kushy.json
 scripts/build-strains.mjs      importados + aportes -> data/strains.json
+scripts/validate.mjs           Valida aportes y fuentes (lo corre el CI)
+schema/                        JSON Schema de aportes y fuentes
+.github/workflows/datos.yml    CI: validación + build en cada pull request
 ```
 
 ## Probar en local
@@ -29,6 +32,8 @@ npx serve .
 ## Regenerar los datos
 
 ```bash
+npm install                      # solo la primera vez (instala el validador)
+node scripts/validate.mjs
 node scripts/build-strains.mjs
 ```
 

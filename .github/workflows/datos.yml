@@ -1,0 +1,40 @@
+# Valida los aportes y comprueba que los archivos generados estén al día.
+# Corre en cada pull request y en cada push a main.
+name: Datos
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    name: Validar y generar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias de los scripts
+        run: npm ci
+
+      - name: Validar aportes y fuentes
+        run: node scripts/validate.mjs
+
+      - name: Generar datos
+        run: node scripts/build-strains.mjs
+
+      - name: Comprobar que los archivos generados estén commiteados
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Los archivos generados no coinciden con los aportes. Corré 'node scripts/build-strains.mjs' y commiteá el resultado."
+            git status --short
+            exit 1
+          fi

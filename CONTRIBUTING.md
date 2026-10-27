@@ -43,7 +43,26 @@ No edites `data/strains.json`: es un archivo generado y se pisa al regenerar. Lo
    Hay un ejemplo completo en `data/aportes/_afghan-big-bud.json` (los archivos que empiezan con `_`
    son ejemplos: se validan pero no se publican).
 
-3. **Regenerar** con `node scripts/build-strains.mjs` e incluir el `data/strains.json` resultante en el PR.
+3. **Validar y regenerar** (la primera vez, `npm install` para instalar el validador):
+
+   ```bash
+   node scripts/validate.mjs
+   node scripts/build-strains.mjs
+   ```
+
+   Incluí los archivos generados en el PR. El CI corre lo mismo en cada pull request y falla si un
+   aporte no pasa la validación o si los archivos generados no están al día.
+
+### Qué revisa la validación
+
+- Forma de cada campo según `schema/aporte.schema.json` y `schema/fuentes.schema.json`
+  (tu editor puede usarlos para autocompletar gracias a la clave `"$schema"`).
+- Rangos: THC entre 0 y 40 %, CBD entre 0 y 30 %, floración entre 4 y 20 semanas, `min ≤ max`.
+- Genética: `indica + sativa` tiene que sumar 100.
+- Fuente: tiene que existir y su licencia tiene que ser abierta (ODbL, DbCL, PDDL, CC0, CC-BY 4.0 o MIT).
+- Padres: tienen que ser slugs existentes.
+- Afirmaciones médicas: se rechazan textos como "alivia el dolor" o "ayuda con el insomnio".
+  En `adversos` sí se aceptan síntomas ("Dolor de cabeza") porque describen un efecto no deseado.
 
 ## Reglas para datos
 

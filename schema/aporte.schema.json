@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://facu-ferreyra.github.io/Cepario/schema/aporte.schema.json",
+  "title": "Aporte de Cepario",
+  "description": "Archivo data/aportes/<slug>.json: solo los campos aportados, cada uno con su fuente. Reglas extra (fuente existente, genética que suma 100, palabras médicas) en scripts/validate.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "minProperties": 1,
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comentario": { "type": "string", "description": "Nota para quien revisa. No se publica." },
+    "nombre": { "type": "string", "minLength": 1, "maxLength": 80, "description": "Solo para variedades nuevas (slug que no existe)." },
+    "criador": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/texto" } } },
+    "tipo": { "$ref": "#/$defs/dato", "properties": { "valor": { "enum": ["hibrida", "indica", "sativa"] } } },
+    "genetica": {
+      "$ref": "#/$defs/dato",
+      "properties": {
+        "valor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["indica", "sativa"],
+          "properties": { "indica": { "$ref": "#/$defs/porcentaje" }, "sativa": { "$ref": "#/$defs/porcentaje" } }
+        }
+      }
+    },
+    "thc": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/thc" } } },
+    "cbd": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/cbd" } } },
+    "floracion": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/floracion" } } },
+    "sabores": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
+    "efectos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
+    "adversos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
+    "terpenos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
+    "padres": {
+      "$ref": "#/$defs/dato",
+      "properties": { "valor": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "$ref": "#/$defs/slug" } } }
+    }
+  },
+  "$defs": {
+    "dato": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valor", "fuente"],
+      "properties": { "valor": true, "fuente": { "$ref": "#/$defs/slug" } }
+    },
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "texto": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "lista": { "type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 40 } },
+    "porcentaje": { "type": "number", "minimum": 0, "maximum": 100 },
+    "thc": {
+      "description": "THC en %: número o rango {min, max}, entre 0 y 40.",
+      "oneOf": [
+        { "type": "number", "minimum": 0, "maximum": 40 },
+        { "type": "object", "additionalProperties": false, "required": ["min", "max"],
+          "properties": { "min": { "type": "number", "minimum": 0, "maximum": 40 }, "max": { "type": "number", "minimum": 0, "maximum": 40 } } }
+      ]
+    },
+    "cbd": {
+      "description": "CBD en %: número o rango {min, max}, entre 0 y 30.",
+      "oneOf": [
+        { "type": "number", "minimum": 0, "maximum": 30 },
+        { "type": "object", "additionalProperties": false, "required": ["min", "max"],
+          "properties": { "min": { "type": "number", "minimum": 0, "maximum": 30 }, "max": { "type": "number", "minimum": 0, "maximum": 30 } } }
+      ]
+    },
+    "floracion": {
+      "description": "Floración en semanas: número o rango {min, max}, entre 4 y 20.",
+      "oneOf": [
+        { "type": "number", "minimum": 4, "maximum": 20 },
+        { "type": "object", "additionalProperties": false, "required": ["min", "max"],
+          "properties": { "min": { "type": "number", "minimum": 4, "maximum": 20 }, "max": { "type": "number", "minimum": 4, "maximum": 20 } } }
+      ]
+    }
+  }
+}

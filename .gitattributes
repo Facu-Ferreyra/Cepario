@@ -1,0 +1,5 @@
+# Finales de línea LF en todas las plataformas: los scripts generan LF, así
+# regenerar los datos en Windows no muestra archivos "modificados" sin cambios reales.
+* text=auto eol=lf
+*.png binary
+*.jpg binary

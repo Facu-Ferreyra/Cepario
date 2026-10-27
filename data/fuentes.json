@@ -1,4 +1,5 @@
 {
+  "$schema": "../schema/fuentes.schema.json",
   "ejemplo": {
     "nombre": "Aporte de ejemplo (datos ficticios)",
     "url": "https://github.com/Facu-Ferreyra/Cepario/blob/main/CONTRIBUTING.md",
