@@ -5,6 +5,7 @@
 //   1. data/importados/*.json  datos importados de fuentes externas (hoy: Kushy)
 //   2. data/fuentes.json       fuentes declaradas por quienes aportan
 //   3. data/aportes/<slug>.json aportes de la comunidad, uno por variedad
+// Y a partir de data/strains.json genera las páginas estáticas v/<slug>/index.html y sitemap.xml.
 // Uso:  node scripts/build-strains.mjs
 //
 // Regla de combinación: si un aporte trae un campo, reemplaza al importado (el campo entero).
@@ -17,6 +18,7 @@ import {
   DIR_DATA, DIR_IMPORTADOS, DIR_APORTES, ARCHIVO_FUENTES, CAMPOS, CAMPOS_FICHA,
   leerJSON, listarJSON, ordenarPorNombre,
 } from './lib/datos.mjs';
+import { generarPaginas } from './lib/paginas.mjs';
 
 const errores = [];
 
@@ -89,4 +91,6 @@ const json = `{"version":1,"campos":${JSON.stringify(CAMPOS_FICHA)},` +
   variedades.map((v) => JSON.stringify(v)).join(',\n') + '\n]}\n';
 writeFileSync(join(DIR_DATA, 'strains.json'), json);
 
-console.log(`OK: ${variedades.length} variedades · ${aportes.length} aportes (${camposAportados} campos, ${nuevas} variedades nuevas)`);
+const paginas = generarPaginas({ fuentes: fuentesUsadas, variedades });
+
+console.log(`OK: ${variedades.length} variedades · ${aportes.length} aportes (${camposAportados} campos, ${nuevas} variedades nuevas) · ${paginas} páginas + sitemap.xml`);

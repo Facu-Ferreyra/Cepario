@@ -15,14 +15,17 @@ js/datos.js                    Estado compartido y utilidades (variedades, índi
 js/bud.js                      Generador procedural del cogollo (Three.js)
 js/viewer.js                   Escena 3D, cámara, interacción y transiciones
 js/search.js                   Buscador (combobox accesible)
-js/ficha.js                    Ficha de la variedad
+js/ficha.js                    Ficha de la variedad (pinta y maneja clicks)
+js/ficha-html.js               HTML de la ficha (lo usan el navegador y el build)
+v/<slug>/index.html            Página estática por variedad (GENERADA)
+sitemap.xml                    Mapa del sitio para buscadores (GENERADO)
 data/strains.json              Datos finales GENERADOS (no editar a mano)
 data/importados/kushy.json     Kushy ya limpiado (generado desde el CSV)
 data/aportes/<slug>.json       Aportes de la comunidad, uno por variedad
 data/fuentes.json              Fuentes que usan los aportes
 data/licencias/                Licencias de las fuentes de datos
 scripts/importar-kushy.mjs     CSV de Kushy -> data/importados/kushy.json
-scripts/build-strains.mjs      importados + aportes -> data/strains.json
+scripts/build-strains.mjs      importados + aportes -> data/strains.json, v/ y sitemap.xml
 scripts/validate.mjs           Valida aportes y fuentes (lo corre el CI)
 schema/                        JSON Schema de aportes y fuentes
 .github/workflows/datos.yml    CI: validación + build en cada pull request
@@ -47,6 +50,11 @@ node scripts/build-strains.mjs
 Combina `data/importados/*.json` con `data/aportes/*.json`: si un aporte trae un campo, reemplaza al
 importado; un aporte para un slug inexistente crea una variedad nueva. El resultado es
 determinístico, así que regenerar nunca pierde aportes.
+
+También genera una página estática por variedad en `v/<slug>/index.html` (con título, descripción
+y la ficha en HTML, legible sin JavaScript; el visor 3D se carga encima) y `sitemap.xml`. La URL
+pública del sitio para el sitemap está en `scripts/lib/datos.mjs` (`URL_SITIO`). Los enlaces viejos
+`index.html#slug` siguen funcionando: muestran la variedad y la URL pasa a ser `v/<slug>/`.
 
 Re-importar Kushy solo hace falta si cambia el CSV o la limpieza:
 

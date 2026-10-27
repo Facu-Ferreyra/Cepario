@@ -5,11 +5,11 @@
 import { DB, bySlug, indexar, pasaFiltro, nf, TIPO_TXT, FILTRO_TXT, MUESTRA } from './datos.js';
 import { swatchCSS } from './bud.js';
 import { mostrarVariedad, salirDeFoco, arrancarVisor } from './viewer.js';
-import { pintarFicha, iniciarFicha } from './ficha.js';
+import { pintarFicha, iniciarFicha, urlVariedad } from './ficha.js';
 import { iniciarBuscador, cerrarBusqueda } from './search.js';
 
 const $ = (id) => document.getElementById(id);
-const stage = $('stage'), loaderEl = $('loader');
+const hero = $('hero'), stage = $('stage'), loaderEl = $('loader');
 // Rutas relativas a este archivo (js/), no a la página: así funcionan desde cualquier carpeta
 const URL_DATOS = new URL('../data/strains.json', import.meta.url);
 
@@ -70,9 +70,13 @@ function seleccionar(slug, dir = 1) {
   mostrarVariedad(v, dir);
   pintarFicha(v, !primera);
   actualizarContador();
-  try { history.replaceState(null, '', '#' + encodeURIComponent(slug)); } catch { /* algunos navegadores lo bloquean en file:// */ }
+  // La URL pasa a ser la página estática de la variedad (v/<slug>/), sin recargar
+  document.title = `${v.nombre} · Cepario`;
+  try { history.replaceState(null, '', urlVariedad(slug)); } catch { /* algunos navegadores lo bloquean en file:// */ }
 }
-window.addEventListener('hashchange', () => { const s = decodeURIComponent(location.hash.slice(1)); if (s && s !== active) irA(s); });
+// Enlaces viejos con #slug: muestran la variedad y la URL se reescribe a v/<slug>/
+const slugDelHash = () => decodeURIComponent(location.hash.slice(1));
+window.addEventListener('hashchange', () => { const s = slugDelHash(); if (s && s !== active) irA(s); });
 
 /* =========================================================
    ARRANQUE
@@ -124,7 +128,8 @@ async function iniciar() {
   $('featGo').addEventListener('click', () => irA(dia.id));
   aplicarFiltro('todas', false);
   loaderEl.classList.remove('show');
-  const desdeURL = decodeURIComponent(location.hash.slice(1));
-  seleccionar(bySlug.has(desdeURL) ? desdeURL : dia.id, 1);
+  // Prioridad: #slug (enlace viejo) > página v/<slug>/ (data-slug) > variedad del día
+  const inicial = [slugDelHash(), hero.dataset.slug].find((s) => s && bySlug.has(s)) || dia.id;
+  seleccionar(inicial, 1);
 }
 iniciar();

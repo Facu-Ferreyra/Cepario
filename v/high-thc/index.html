@@ -1,0 +1,168 @@
+<!doctype html>
+<!-- Copyright 2026 Facundo Agustín Ferreyra
+     SPDX-License-Identifier: Apache-2.0 -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>High THC · Cepario</title>
+<meta name="description" content="High THC: variedad híbrida. Datos con fuente y licencia.">
+<link rel="canonical" href="https://facu-ferreyra.github.io/Cepario/v/high-thc/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234d5a3d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21v-6M12 15c-1.5-3-1.5-7 0-12 1.5 5 1.5 9 0 12zM12 15c-3-1-5.5-3.5-7-8 4 1.5 6.5 4.5 7 8zM12 15c3-1 5.5-3.5 7-8-4 1.5-6.5 4.5-7 8z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="modulepreload" href="../../js/datos.js">
+<link rel="modulepreload" href="../../js/bud.js">
+<link rel="modulepreload" href="../../js/viewer.js">
+<link rel="modulepreload" href="../../js/ficha.js">
+<link rel="modulepreload" href="../../js/search.js">
+<noscript><style>html,body{height:auto}body{overflow:auto}.hero{height:auto;min-height:100vh}.main,.nav,.feat,.top,.closeup,#mSearch{display:none}.card{max-height:none;overflow:visible}</style></noscript>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M12 21v-6"/><path d="M12 15c-1.5-3-1.5-7 0-12 1.5 5 1.5 9 0 12z"/><path d="M12 15c-3-1-5.5-3.5-7-8 4 1.5 6.5 4.5 7 8zM12 15c3-1 5.5-3.5 7-8-4 1.5-6.5 4.5-7 8z"/><path d="M12 15c-2.5.5-5 0-7.5-2 2.5-.5 5 .2 7.5 2zM12 15c2.5.5 5 0 7.5-2-2.5-.5-5 .2-7.5 2z"/></symbol>
+    <symbol id="i-leafw" viewBox="0 0 24 24"><path d="M12 21v-6"/><path d="M12 15c-2.5-3-2.5-7.5 0-12 2.5 4.5 2.5 9 0 12z"/><path d="M12 15c-3.5-.5-6.5-3-7.5-7.5 4 .8 7 3.5 7.5 7.5zM12 15c3.5-.5 6.5-3 7.5-7.5-4 .8-7 3.5-7.5 7.5z"/></symbol>
+    <symbol id="i-leaft" viewBox="0 0 24 24"><path d="M12 21v-6"/><path d="M12 15c-.8-3-.8-7 0-12 .8 5 .8 9 0 12z"/><path d="M12 15c-2-1.5-4.5-4.5-6-9 3 2 5 5 6 9zM12 15c2-1.5 4.5-4.5 6-9-3 2-5 5-6 9z"/><path d="M12 15c-2 0-4.5-1-6.5-3 2.5 0 4.5.8 6.5 3zM12 15c2 0 4.5-1 6.5-3-2.5 0-4.5.8-6.5 3z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6.5a1.5 1.5 0 0 0-3 0V11"/><path d="M15 10.5v-6a1.5 1.5 0 0 0-3 0v6"/><path d="M12 10.5v-5a1.5 1.5 0 0 0-3 0V14"/><path d="M18 8.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1.5a7 7 0 0 1-5-2.1L4 16.4a1.6 1.6 0 0 1 2.3-2.3L9 16.5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></symbol>
+    <symbol id="i-zoomin" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4M11 8.5v5M8.5 11h5"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+    <symbol id="i-ccw" viewBox="0 0 24 24"><path d="M4 4v5h5"/><path d="M4.6 15A8 8 0 1 0 6.3 6.3L4 9"/></symbol>
+    <symbol id="i-cw" viewBox="0 0 24 24"><path d="M20 4v5h-5"/><path d="M19.4 15A8 8 0 1 1 17.7 6.3L20 9"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+    <symbol id="i-dna" viewBox="0 0 24 24"><path d="M7 3c0 5 10 7 10 12 0 2.5-1.5 4.5-3 6"/><path d="M17 3c0 5-10 7-10 12 0 2.5 1.5 4.5 3 6"/><path d="M8.5 7h7M8.5 17h7"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 15.5h.01M12 12h.01M15.5 8.5h.01M8.5 15.5h.01" stroke-width="2.6"/></symbol>
+    <symbol id="i-chevl" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  </defs>
+</svg>
+
+<!-- Aviso de edad -->
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateT" hidden>
+  <div class="gbox">
+    <p class="eyebrow">Aviso</p>
+    <h2 id="gateT">¿Tenés 18 años o más?</h2>
+    <p>Este sitio reúne información sobre variedades de cannabis con fines informativos. No es consejo médico ni promueve el consumo.</p>
+    <div class="gbtns">
+      <button type="button" class="primary" id="gYes">Sí, tengo 18 o más</button>
+      <button type="button" id="gNo">No</button>
+    </div>
+    <p id="gMsg" hidden>Este contenido no está disponible para menores de edad.</p>
+  </div>
+</div>
+
+<div class="hero" id="hero" data-light="day" data-slug="high-thc">
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <header class="mtop">
+    <div class="brand">Cepario<small class="tagline">Atlas de variedades de cannabis</small></div>
+    <button class="ibtn" type="button" id="mSearch" aria-label="Buscar variedad"><svg class="ic"><use href="#i-search"/></svg></button>
+  </header>
+
+  <!-- 1) Sidebar: filtros + variedad del día -->
+  <aside class="side" aria-label="Filtros">
+    <div class="brand">Cepario<small class="tagline">Atlas de variedades de cannabis</small></div>
+    <ul class="nav" id="nav">
+      <li><button type="button" data-f="todas" aria-pressed="true"><svg class="ic"><use href="#i-grid"/></svg><span>Todas<small data-c="todas">—</small></span></button></li>
+      <li><button type="button" data-f="hibrida" aria-pressed="false"><svg class="ic"><use href="#i-leaf"/></svg><span>Híbridas<small data-c="hibrida">—</small></span></button></li>
+      <li><button type="button" data-f="indica" aria-pressed="false"><svg class="ic"><use href="#i-leafw"/></svg><span>Índicas<small data-c="indica">—</small></span></button></li>
+      <li><button type="button" data-f="sativa" aria-pressed="false"><svg class="ic"><use href="#i-leaft"/></svg><span>Sativas<small data-c="sativa">—</small></span></button></li>
+      <li><button type="button" data-f="datos" aria-pressed="false"><svg class="ic"><use href="#i-star"/></svg><span>Con más datos<small data-c="datos">—</small></span></button></li>
+    </ul>
+    <div class="feat">
+      <p class="eyebrow">Variedad del día</p>
+      <div class="swatch" id="featSw"></div>
+      <h3 id="featTitle">—</h3>
+      <p id="featText"></p>
+      <button type="button" id="featGo">Ver ficha <svg class="ic"><use href="#i-arrow"/></svg></button>
+    </div>
+  </aside>
+
+  <!-- 2) Centro: navegación + visor -->
+  <section class="main">
+    <div class="navrow">
+      <button class="nbtn" type="button" id="prev" aria-label="Variedad anterior"><svg class="ic"><use href="#i-chevl"/></svg></button>
+      <div class="count" aria-live="polite"><span id="pos">—</span><small id="flabel">Todas las variedades</small></div>
+      <button class="nbtn" type="button" id="next" aria-label="Variedad siguiente"><svg class="ic"><use href="#i-chev"/></svg></button>
+      <button class="nbtn" type="button" id="rand" aria-label="Variedad al azar"><svg class="ic"><use href="#i-dice"/></svg></button>
+      <select class="fsel" id="fsel" aria-label="Filtrar por tipo">
+        <option value="todas">Todas</option><option value="hibrida">Híbridas</option><option value="indica">Índicas</option>
+        <option value="sativa">Sativas</option><option value="datos">Con más datos</option>
+      </select>
+    </div>
+    <div class="stage" id="stage" tabindex="0" role="application" aria-roledescription="visor 3D"
+         aria-label="Modelo 3D estilizado de la variedad. Arrastrá o usá las flechas para girarlo; rueda, pellizco o las teclas más y menos para hacer zoom; doble clic o 0 para volver a la vista inicial.">
+      <div class="ground" id="ground"></div>
+      <div class="loader" id="loader"><span class="ring"></span><span id="loaderText">Cargando el catálogo…</span></div>
+      <p class="badge3d">Representación 3D estilizada · no es una foto</p>
+      <div class="hint" id="hint"><svg class="ic"><use href="#i-hand"/></svg>Arrastrá para girar · rueda para zoom</div>
+      <div class="rail">
+        <button class="rbtn" type="button" id="zin" aria-label="Acercar" aria-pressed="true"><svg class="ic"><use href="#i-zoomin"/></svg></button>
+        <button class="rbtn" type="button" id="zout" aria-label="Alejar" aria-pressed="false"><svg class="ic"><use href="#i-search"/></svg></button>
+        <button class="rbtn" type="button" id="expand" aria-label="Vista ampliada" aria-pressed="false"><svg class="ic"><use href="#i-expand"/></svg></button>
+        <button class="rbtn" type="button" id="light" aria-label="Luz de atardecer" aria-pressed="false"><svg class="ic"><use href="#i-sun"/></svg></button>
+      </div>
+      <div class="turn">
+        <button type="button" id="tl" aria-label="Girar 90 grados a la izquierda"><svg class="ic"><use href="#i-ccw"/></svg></button>
+        <button type="button" id="t360" aria-label="Dar una vuelta completa">360°</button>
+        <button type="button" id="tr" aria-label="Girar 90 grados a la derecha"><svg class="ic"><use href="#i-cw"/></svg></button>
+      </div>
+      <p class="caption" id="caption">Origen sin registrar.</p>
+    </div>
+  </section>
+
+  <!-- 3) Derecha: buscador + ficha -->
+  <section class="info">
+    <div class="top">
+      <label class="search"><svg class="ic"><use href="#i-search"/></svg>
+        <input id="q" type="search" placeholder="Buscar variedad o criador…" autocomplete="off" spellcheck="false"
+               role="combobox" aria-expanded="false" aria-controls="results" aria-autocomplete="list" aria-label="Buscar variedad o criador">
+      </label>
+      <button class="ibtn sclose" type="button" id="sClose" aria-label="Cerrar búsqueda"><svg class="ic"><use href="#i-x"/></svg></button>
+      <ul class="results" id="results" role="listbox" aria-label="Resultados" hidden></ul>
+    </div>
+    <div class="card" id="detail" tabindex="-1">
+      <p class="notice" id="notice" hidden></p>
+      <article id="article" aria-live="polite">
+    <p class="eyebrow">Híbrida</p>
+    <h1>High THC</h1>
+    <div class="tags"><span>Híbrida</span></div>
+    <h2>Ficha</h2>
+    <div class="rows"><div class="row"><svg class="ic"><use href="#i-user"/></svg><span class="lab">Criador</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-dna"/></svg><span class="lab">Genética</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-flask"/></svg><span class="lab">THC</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-flask"/></svg><span class="lab">CBD</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-clock"/></svg><span class="lab">Floración</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-leaf"/></svg><span class="lab">Sabores</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-spark"/></svg><span class="lab">Efectos</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-alert"/></svg><span class="lab">Efectos adversos</span><span class="none">Sin datos verificados</span></div><div class="row"><svg class="ic"><use href="#i-drop"/></svg><span class="lab">Terpenos</span><span class="none">Sin datos verificados</span></div></div>
+    <h2>Linaje</h2>
+    <div><p class="lnote">Sin cruces registrados.</p></div>
+    <p class="fine">Base de datos bajo <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>. Datos: <a href="https://github.com/kushyapp/cannabis-dataset" target="_blank" rel="noopener">Kushy cannabis-dataset</a> (MIT, 2017-11-14). Copyright (c) 2016-present, Kushy. Información con fines informativos; no es consejo médico.</p>
+    <button type="button" class="closeup" aria-pressed="false">
+      <span class="swatch" style="background:var(--sage-tint)"></span>
+      <span><b>Ver de cerca</b><small>Acercá la cámara para ver cálices, pistilos y tricomas.</small></span>
+      <svg class="ic chev"><use href="#i-chev"/></svg>
+    </button></article>
+    </div>
+  </section>
+</div>
+
+<script type="module" src="../../js/main.js"></script>
+</body>
+</html>

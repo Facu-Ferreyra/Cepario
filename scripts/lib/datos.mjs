@@ -12,6 +12,9 @@ export const DIR_DATA = join(ROOT, 'data');
 export const DIR_IMPORTADOS = join(DIR_DATA, 'importados');
 export const DIR_APORTES = join(DIR_DATA, 'aportes');
 export const ARCHIVO_FUENTES = join(DIR_DATA, 'fuentes.json');
+export const DIR_PAGINAS = join(ROOT, 'v');
+// URL pública del sitio (GitHub Pages). Se usa en el sitemap y en los <link rel="canonical">.
+export const URL_SITIO = 'https://facu-ferreyra.github.io/Cepario/';
 
 // Campos que se muestran en la ficha, en este orden
 export const CAMPOS_FICHA = ['criador', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos'];
