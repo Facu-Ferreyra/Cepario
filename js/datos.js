@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 /* =========================================================
    DATOS: estado compartido y utilidades
    ========================================================= */

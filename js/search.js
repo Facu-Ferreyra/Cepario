@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Buscador por nombre o criador (combobox accesible con navegación por teclado).
 import { DB, TIPO_TXT, norm, esc, nf } from './datos.js';
 import { swatchCSS } from './bud.js';

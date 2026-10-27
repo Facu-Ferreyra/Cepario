@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Utilidades compartidas por los scripts de datos (importar, combinar, validar).
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';

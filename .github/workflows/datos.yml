@@ -1,3 +1,6 @@
+# Copyright 2026 Facundo Agustín Ferreyra
+# SPDX-License-Identifier: Apache-2.0
+
 # Valida los aportes y comprueba que los archivos generados estén al día.
 # Corre en cada pull request y en cada push a main.
 name: Datos
@@ -21,6 +24,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
+
+      - name: Comprobar avisos de licencia en el código
+        run: |
+          faltan=$(git ls-files '*.js' '*.mjs' '*.css' '*.yml' 'index.html' | xargs grep -L 'SPDX-License-Identifier: Apache-2.0' || true)
+          if [ -n "$faltan" ]; then
+            for f in $faltan; do echo "::error file=$f::Falta el encabezado de licencia (ver CONTRIBUTING.md)"; done
+            exit 1
+          fi
 
       - name: Instalar dependencias de los scripts
         run: npm ci

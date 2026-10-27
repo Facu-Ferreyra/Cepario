@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Importa el CSV de Kushy (cannabis-dataset, licencia MIT) a data/importados/kushy.json
 // Uso:  node scripts/importar-kushy.mjs <ruta/al/strains-kushy_api.csv>
 //

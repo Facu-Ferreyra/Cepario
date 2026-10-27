@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Valida data/fuentes.json y todos los aportes de data/aportes/ (incluidos los ejemplos con _).
 // Uso:  node scripts/validate.mjs
 //

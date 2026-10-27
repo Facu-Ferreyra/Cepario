@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Genera data/strains.json combinando:
 //   1. data/importados/*.json  datos importados de fuentes externas (hoy: Kushy)
 //   2. data/fuentes.json       fuentes declaradas por quienes aportan

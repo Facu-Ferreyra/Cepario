@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Punto de entrada: carga los datos, filtros, navegación anterior/siguiente, enlaces #slug y aviso de edad.
 import { DB, bySlug, indexar, pasaFiltro, nf, TIPO_TXT, FILTRO_TXT, MUESTRA } from './datos.js';
 import { swatchCSS } from './bud.js';

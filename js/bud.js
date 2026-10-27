@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Generador procedural del cogollo: paleta determinística por variedad y geometría Three.js.
 import * as THREE from 'three';
 

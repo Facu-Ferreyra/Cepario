@@ -1,3 +1,6 @@
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
 // Ficha de la variedad (panel derecho): datos con su fuente, linaje y botón "Ver de cerca".
 import { DB, bySlug, hijos, CAMPOS, TIPO_TXT, esc, nf, tieneDatos } from './datos.js';
 import { swatchCSS } from './bud.js';

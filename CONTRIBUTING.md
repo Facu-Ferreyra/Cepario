@@ -79,4 +79,13 @@ No edites `data/strains.json`: es un archivo generado y se pisa al regenerar. Lo
 ## Reglas para código
 
 - JavaScript sin paso de build: la página tiene que seguir funcionando servida como archivos estáticos.
+- Cada archivo de código (`.js`, `.mjs`, `.css`, `.yml`, `index.html`) empieza con el aviso de licencia
+  (el CI lo comprueba). En JavaScript:
+
+  ```js
+  // Copyright 2026 Facundo Agustín Ferreyra
+  // SPDX-License-Identifier: Apache-2.0
+  ```
+
+  Si el archivo es tuyo, podés sumar tu nombre en otra línea `Copyright`.
 - Probá en un ancho de 375 px y con `prefers-reduced-motion` antes de enviar.
