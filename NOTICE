@@ -1,0 +1,13 @@
+Cepario
+Copyright 2026 Facundo Agustín Ferreyra
+
+Este producto incluye software desarrollado por Facundo Agustín Ferreyra,
+distribuido bajo la Apache License, Version 2.0 (ver LICENSE).
+
+Los datos de data/strains.json NO están cubiertos por la Apache License:
+se distribuyen bajo la Open Database License (ODbL) 1.0 (ver data/LICENSE).
+
+Parte de los datos deriva de Kushy cannabis-dataset
+(https://github.com/kushyapp/cannabis-dataset),
+Copyright (c) 2016-present, Kushy, bajo licencia MIT
+(ver data/licencias/kushy-LICENSE.txt).

@@ -1,0 +1,18 @@
+Cepario — base de datos de variedades (data/strains.json)
+
+This Cepario database is made available under the Open Database License:
+http://opendatacommons.org/licenses/odbl/1.0/. Any rights in individual
+contents of the database are licensed under the Database Contents License:
+http://opendatacommons.org/licenses/dbcl/1.0/
+
+Esta base de datos de Cepario se publica bajo la Open Database License (ODbL) 1.0.
+Los derechos sobre los contenidos individuales de la base se licencian bajo la
+Database Contents License (DbCL) 1.0. El texto en inglés de arriba y los textos
+oficiales enlazados son los que tienen validez.
+
+Atribución requerida: "Cepario (https://github.com/<usuario>/cepario), ODbL 1.0".
+
+Datos de terceros incluidos:
+- Kushy cannabis-dataset (https://github.com/kushyapp/cannabis-dataset),
+  Copyright (c) 2016-present, Kushy. Licencia MIT; su aviso se conserva en
+  data/licencias/kushy-LICENSE.txt. Cada registro indica su fuente en el campo "fuente".
