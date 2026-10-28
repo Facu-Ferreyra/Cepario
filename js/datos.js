@@ -10,7 +10,7 @@ export const FILTRO_TXT = { todas: 'Todas las variedades', hibrida: 'Híbridas',
 export const CAMPOS = [
   ['criador', 'Criador', 'user'], ['genetica', 'Genética', 'dna'], ['thc', 'THC', 'flask'], ['cbd', 'CBD', 'flask'],
   ['floracion', 'Floración', 'clock'], ['sabores', 'Sabores', 'leaf'], ['efectos', 'Efectos', 'spark'],
-  ['adversos', 'Efectos adversos', 'alert'], ['terpenos', 'Terpenos', 'drop'],
+  ['adversos', 'Efectos adversos', 'alert'], ['terpenos', 'Terpenos', 'drop'], ['antocianinas', 'Tendencia a violeta', 'drop'],
 ];
 // Respaldo mínimo si data/indice.json no se puede cargar (por ejemplo, al abrir con doble clic)
 /** @type {{ fuentes: Object<string, import('./tipos.js').Fuente>, variedades: Variedad[] }} */
@@ -40,7 +40,7 @@ export const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCas
 export const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const nf = new Intl.NumberFormat('es-AR');
 /** ¿La variedad completa tiene algún dato además de tipo, criador y linaje? @param {Variedad} v */
-export const tieneDatos = (v) => !!(v.sabores || v.efectos || v.thc || v.cbd || v.floracion || v.terpenos);
+export const tieneDatos = (v) => !!(v.sabores || v.efectos || v.thc || v.cbd || v.floracion || v.terpenos || v.antocianinas);
 /** @param {Resumen} r @param {string} f Filtro: todas, hibrida, indica, sativa o datos */
 export const pasaFiltro = (r, f) => f === 'todas' || (f === 'datos' ? (r.datos || 0) > 0 : r.tipo === f);
 
@@ -48,10 +48,12 @@ export const pasaFiltro = (r, f) => f === 'todas' || (f === 'datos' ? (r.datos |
  * Variedad completa -> entrada del índice. La usa el build para escribir data/indice.json.
  * "datos": 1 si tiene algún dato (filtro "Con más datos"), 2 si además tiene sabores y efectos
  * (candidata a "Variedad del día"). Se omite cuando es 0, igual que los campos vacíos.
+ * "violeta" lo calcula el build mirando todo el linaje (scripts/lib/violeta.mjs).
  * @param {Variedad} v
+ * @param {import('./tipos.js').NivelVioleta} [violeta]
  * @returns {Resumen}
  */
-export function resumir(v) {
+export function resumir(v, violeta) {
   /** @type {Resumen} */
   const r = { id: v.id, nombre: v.nombre };
   if (v.tipo) r.tipo = v.tipo.valor;
@@ -59,6 +61,7 @@ export function resumir(v) {
   const datos = v.sabores && v.efectos ? 2 : tieneDatos(v) ? 1 : 0;
   if (datos) r.datos = datos;
   if (v.padres) r.padres = v.padres.valor;
+  if (violeta) r.violeta = violeta;
   return r;
 }
 

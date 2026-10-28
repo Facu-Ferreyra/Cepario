@@ -21,6 +21,7 @@ import {
   leerJSON, listarJSON, ordenarPorNombre,
 } from './lib/datos.mjs';
 import { generarPaginas } from './lib/paginas.mjs';
+import { tendenciasVioleta } from './lib/violeta.mjs';
 import { resumir } from '../js/datos.js';
 
 const errores = [];
@@ -97,9 +98,11 @@ const json = `{"version":1,"campos":${JSON.stringify(CAMPOS_FICHA)},` +
   variedades.map((v) => JSON.stringify(v)).join(',\n') + '\n]}\n';
 writeFileSync(join(DIR_DATA, 'strains.json'), json);
 
-// Nivel 1: índice liviano para buscador, filtros y navegación (más las fuentes, que usa toda ficha)
+// Nivel 1: índice liviano para buscador, filtros y navegación (más las fuentes, que usa toda ficha).
+// Incluye el nivel de violeta, que se calcula acá porque depende de todo el linaje.
+const violeta = tendenciasVioleta(variedades);
 writeFileSync(join(DIR_DATA, 'indice.json'), `{"version":1,"fuentes":${JSON.stringify(fuentesUsadas)},\n"variedades":[\n` +
-  variedades.map((v) => JSON.stringify(resumir(v))).join(',\n') + '\n]}\n');
+  variedades.map((v) => JSON.stringify(resumir(v, violeta.get(v.id)))).join(',\n') + '\n]}\n');
 
 // Nivel 2: una ficha completa por archivo. Se borra la carpeta para no dejar variedades viejas.
 const DIR_DETALLE = join(DIR_DATA, 'v');

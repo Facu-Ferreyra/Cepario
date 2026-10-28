@@ -7,6 +7,7 @@
 // La validación real de los aportes está en schema/*.schema.json y scripts/validate.mjs.
 
 /** @typedef {'hibrida' | 'indica' | 'sativa'} Tipo */
+/** @typedef {'alta' | 'media' | 'baja'} NivelVioleta */
 
 /**
  * Un valor con la fuente de la que viene. "fuente" es una clave del bloque `fuentes`.
@@ -43,7 +44,7 @@
 
 /**
  * Variedad completa: data/v/<slug>.json y cada elemento de data/strains.json.
- * Los campos ausentes se muestran como "Sin datos verificados".
+ * Los campos ausentes se juntan en la línea "Sin determinar" de la ficha.
  * @typedef {object} Variedad
  * @property {string} id                      Slug: minúsculas, números y guiones
  * @property {string} nombre
@@ -57,6 +58,7 @@
  * @property {Dato<string[]>} [efectos]
  * @property {Dato<string[]>} [adversos]
  * @property {Dato<string[]>} [terpenos]
+ * @property {Dato<NivelVioleta>} [antocianinas]  Tendencia a violeta (pigmentos de la flor)
  * @property {Dato<string[]>} [padres]        Slugs de las variedades progenitoras
  */
 
@@ -69,7 +71,8 @@
  * @property {string} [criador]
  * @property {1 | 2} [datos]       1: tiene algún dato; 2: además tiene sabores y efectos
  * @property {string[]} [padres]
- * @property {string} [_n]         Nombre normalizado para buscar (lo agrega indexar())
+ * @property {NivelVioleta} [violeta]  Color del 3D: dato, herencia o pista por nombre (sin nivel = verde)
+ * @property {string} [_n]        Nombre normalizado para buscar (lo agrega indexar())
  * @property {string} [_c]         Criador normalizado para buscar (lo agrega indexar())
  * @property {number} [_i]         Número de ejemplar: posición en el catálogo, desde 1 (lo agrega indexar())
  */

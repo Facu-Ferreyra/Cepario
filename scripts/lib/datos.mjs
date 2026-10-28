@@ -17,9 +17,9 @@ export const DIR_PAGINAS = join(ROOT, 'v');
 export const URL_SITIO = 'https://facu-ferreyra.github.io/Cepario/';
 
 // Campos que se muestran en la ficha, en este orden
-export const CAMPOS_FICHA = ['criador', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos'];
+export const CAMPOS_FICHA = ['criador', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos', 'antocianinas'];
 // Todos los campos con fuente, en el orden en que se escriben en el JSON final
-export const CAMPOS = ['criador', 'tipo', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos', 'padres'];
+export const CAMPOS = ['criador', 'tipo', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos', 'antocianinas', 'padres'];
 export const TIPOS = ['hibrida', 'indica', 'sativa'];
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 

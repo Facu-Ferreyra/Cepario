@@ -130,9 +130,16 @@ el bloque `fuentes`. Ejemplo ilustrativo de una variedad completa (`data/v/<slug
 | `cbd` | número o `{ "min", "max" }` | %, de 0 a 30 |
 | `floracion` | número o `{ "min", "max" }` | semanas, de 4 a 20 |
 | `sabores`, `efectos`, `adversos`, `terpenos` | lista de textos | |
+| `antocianinas` | `alta`, `media` o `baja` | tendencia a violeta |
 | `padres` | lista de slugs | |
 
-La ficha muestra los campos en este orden; uno ausente aparece como "Sin datos verificados".
+La ficha muestra los campos en este orden; los ausentes se juntan en una línea "Sin determinar".
+
+**Color del modelo 3D.** No hay azar: el violeta sale de `antocianinas` (si hay dato). Si no hay
+dato, se hereda de los padres: si alguno es violeta alto o medio, la hija es media. Si tampoco, se
+usa una pista en el nombre ("purple", "grape", "GDP"…, sin contar "grapefruit"), que solo pinta el
+modelo y no aparece en la ficha. Si nada aplica, el cogollo es verde. Lo calcula
+`scripts/lib/violeta.mjs` y queda en `data/indice.json` como `violeta`.
 Los tipos completos (`Variedad`, `Resumen`, `Fuente`, `Aporte`…) están documentados con JSDoc en
 `js/tipos.js`; con el `jsconfig.json` del repo, VS Code los muestra al pasar el mouse.
 

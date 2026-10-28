@@ -30,6 +30,11 @@
     "efectos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
     "adversos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
     "terpenos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
+    "antocianinas": {
+      "$ref": "#/$defs/dato",
+      "description": "Tendencia a violeta (antocianinas en flores y hojas). Define el color del modelo 3D.",
+      "properties": { "valor": { "enum": ["alta", "media", "baja"] } }
+    },
     "padres": {
       "$ref": "#/$defs/dato",
       "properties": { "valor": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "$ref": "#/$defs/slug" } } }

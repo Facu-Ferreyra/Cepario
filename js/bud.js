@@ -17,7 +17,9 @@ const FORMA = {
   hibrida: { L: 1.9,  W: 0.54, nodos: 5, zorro: 0.26, dens: 0.88, luz: 0.33, morado: 0.15, hojas: 14 },
   sativa:  { L: 2.3,  W: 0.46, nodos: 7, zorro: 0.45, dens: 0.75, luz: 0.39, morado: 0.05, hojas: 11 },
 };
-/** @typedef {{ id: string, tipo?: import('./tipos.js').Tipo }} Semilla  Lo único que define el cogollo */
+/** @typedef {{ id: string, tipo?: import('./tipos.js').Tipo, violeta?: import('./tipos.js').NivelVioleta }} Semilla  Lo único que define el cogollo */
+// Intensidad del violeta según el nivel que calcula el build (dato > herencia > nombre). Sin nivel: verde.
+const VIOLETA = { alta: 0.85, media: 0.55, baja: 0.25 };
 
 /** @param {Semilla} v */
 export function paleta(v) {
@@ -25,10 +27,13 @@ export function paleta(v) {
   const tipo = v.tipo || 'hibrida';
   const F = FORMA[tipo];
   const verde = new THREE.Color().setHSL(0.23 + r() * 0.08, 0.42 + r() * 0.18, F.luz + (r() - 0.5) * 0.06);
-  const morado = r() < F.morado ? 0.35 + r() * 0.5 : 0;
+  // Antes el morado salía al azar. Se siguen consumiendo los mismos números del generador para que
+  // forma, pistilos y tricomas de cada variedad no cambien; el color ahora sale de los datos.
+  if (r() < F.morado) r();
+  const morado = VIOLETA[v.violeta] ?? 0;
   const pistiloJoven = r() < 0.15;
   const pistilo = pistiloJoven ? new THREE.Color().setHSL(0.11, 0.3, 0.82) : new THREE.Color().setHSL(0.045 + r() * 0.05, 0.72, 0.42 + r() * 0.12);
-  return { r, tipo, F, verde, morado, purpura: new THREE.Color().setHSL(0.78 + r() * 0.06, 0.42, 0.24), pistilo, escarcha: 0.45 + r() * 0.5 };
+  return { r, tipo, F, verde, morado, purpura: new THREE.Color().setHSL(0.78 + r() * 0.06, 0.55, 0.28), pistilo, escarcha: 0.45 + r() * 0.5 };
 }
 /** Fondo CSS de la muestra de color (buscador, ficha, variedad del día). @param {Semilla} v @returns {string} */
 export function swatchCSS(v) {
@@ -248,7 +253,7 @@ export function construirCogollo(v) {
     sc.set(s, s * (1.1 + 0.4 * r()), s);
     m4.compose(pos, q, sc);
     caliz.setMatrixAt(i, m4);
-    c.copy(p.verde).lerp(p.purpura, p.morado * Math.pow(r(), 1.5)).offsetHSL(0, 0, (r() - 0.5) * 0.06).lerp(blanco, p.escarcha * 0.18);
+    c.copy(p.verde).lerp(p.purpura, p.morado * (0.45 + 0.55 * Math.pow(r(), 1.5)))   // todo cáliz se tiñe algo.offsetHSL(0, 0, (r() - 0.5) * 0.06).lerp(blanco, p.escarcha * 0.18);
     caliz.setColorAt(i, c);
     datosCaliz.push({ pos: pos.clone(), dir: dir.clone(), s, y });
   }
@@ -256,7 +261,7 @@ export function construirCogollo(v) {
 
   // Hojas de azúcar (escarchadas)
   const matHoja = new THREE.MeshPhysicalMaterial({
-    color: p.verde.clone().offsetHSL(0, -0.05, 0.04).lerp(blanco, 0.2 + p.escarcha * 0.25), side: THREE.DoubleSide,
+    color: p.verde.clone().offsetHSL(0, -0.05, 0.04).lerp(p.purpura, p.morado * 0.35).lerp(blanco, 0.2 + p.escarcha * 0.25), side: THREE.DoubleSide,
     roughness: 1, roughnessMap: T.hoja.rugosidad, normalMap: T.hoja.normal, sheen: 0.8, sheenColor: new THREE.Color(0xffffff),
   });
   translucidez(matHoja, 0.8);

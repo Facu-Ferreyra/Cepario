@@ -29,6 +29,7 @@ function valorHTML(campo, d) {
   if (campo === 'thc' || campo === 'cbd') return `${x} %`;
   if (campo === 'floracion' && typeof x === 'object') return `${x.min}–${x.max} semanas`;
   if (campo === 'floracion') return `${x} semanas`;
+  if (campo === 'antocianinas') return esc(x[0].toUpperCase() + x.slice(1));   // "alta" -> "Alta"
   return esc(x);
 }
 const fila = (etiqueta, d, fuentes, valor) => `<div class="et-fila"><dt>${etiqueta}</dt><dd>${valor}${determino(d, fuentes)}</dd></div>`;
