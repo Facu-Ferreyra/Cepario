@@ -9,6 +9,7 @@ import { FILTROS, FILTRO_TXT, TIPO_TXT, nf } from '../lib/datos.ts';
 import { catalogo, vecinas, urlVariedad, type Vecina } from '../lib/catalogo.ts';
 import Ficha from './Ficha.astro';
 import Visor from './Visor.astro';
+import Buscador from './Buscador.tsx';
 
 interface Props { v: Variedad }
 const { v } = Astro.props;
@@ -82,7 +83,7 @@ const esTipo = (f: string): boolean => f === 'indica' || f === 'sativa' || f ===
   </section>
 
   <section class="info">
-    <div class="top" id="buscador"></div>
+    <div class="top" id="buscador"><Buscador client:idle /></div>
     <div class="card" id="detail" tabindex="-1" aria-label="Etiqueta del ejemplar">
       <article id="article">
         <Ficha v={v} numero={numero} padres={padres} hijos={hijos} fuentes={c.fuentes} />

@@ -21,6 +21,8 @@ export const CAMPOS_FICHA = [
 ] as const satisfies readonly (readonly [keyof Variedad, string])[];
 
 export const nf = new Intl.NumberFormat('es-AR');
+/** Texto para comparar sin mayúsculas ni tildes (buscador). */
+export const norm = (s: string): string => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /** ¿Tiene algún dato además de tipo, criador y linaje? */
 export const tieneDatos = (v: Variedad): boolean =>
