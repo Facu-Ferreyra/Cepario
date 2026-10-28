@@ -1,35 +1,7 @@
 /* Copyright 2026 Facundo Agustín Ferreyra
    SPDX-License-Identifier: Apache-2.0 */
 
-/* Dirección "Herbario": la página es una lámina, el visor 3D es el ejemplar montado y la ficha es
-   la etiqueta pegada abajo a la derecha. La etiqueta es lo único llamativo; el resto es papel y tinta. */
-:root{
-  --papel:#E6E9E1;--superficie:#EEF0EA;--tinta:#262A24;--tenue:#5B6157;--filete:rgba(38,42,36,.22);
-  --clorofila:#1E3A2C;--sobre-clorofila:#F4F5F0;
-  --ambar:#B9822A;            /* único acento: solo decorativo (2,7:1 sobre papel, no sirve para texto) */
-  --antocianina:#5A3858;--hoja-joven:#6F8F4E;--sombra:38,42,36;
-  /* La etiqueta es papel en los dos temas: en el frasco queda como una etiqueta pegada al vidrio */
-  --et-papel:#F4F5F0;--et-tinta:#262A24;--et-tenue:#5B6157;--et-filete:rgba(38,42,36,.3);--et-enlace:#1E3A2C;--et-ambar:#B9822A;
-  --nombre:"Gloock",Georgia,serif;
-  --ui:"Atkinson Hyperlegible",system-ui,sans-serif;
-  --maquina:"Courier Prime","Courier New",monospace;   /* solo dentro de la etiqueta */
-  --ease:cubic-bezier(.22,.8,.24,1);
-  color-scheme:light;
-}
-/* Modo oscuro "Frasco de curado": vidrio ámbar oscuro. Sigue al sistema salvo elección guardada. */
-@media (prefers-color-scheme:dark){
-  :root:not([data-tema="papel"]){
-    --papel:#2A2117;--superficie:#35291C;--tinta:#EDE4CF;--tenue:#B3A68C;--filete:rgba(237,228,207,.2);
-    --clorofila:#A8C98F;--sobre-clorofila:#2A2117;--ambar:#D9A24A;
-    --antocianina:#C49AC0;--hoja-joven:#8FB866;--sombra:0,0,0;color-scheme:dark;
-  }
-}
-:root[data-tema="frasco"]{
-  --papel:#2A2117;--superficie:#35291C;--tinta:#EDE4CF;--tenue:#B3A68C;--filete:rgba(237,228,207,.2);
-  --clorofila:#A8C98F;--sobre-clorofila:#2A2117;--ambar:#D9A24A;
-  --antocianina:#C49AC0;--hoja-joven:#8FB866;--sombra:0,0,0;color-scheme:dark;
-}
-
+/* Estilos de la lámina: usan solo los tokens de tokens.css. */
 *,*::before,*::after{box-sizing:border-box;margin:0}
 html,body{height:100%}
 body{overflow:hidden;background:var(--papel);color:var(--tinta);font:15px/1.45 var(--ui);

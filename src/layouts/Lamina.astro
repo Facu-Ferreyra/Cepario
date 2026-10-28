@@ -1,0 +1,36 @@
+---
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
+// Layout común a todas las páginas: <head>, tipografías, tema y estilos.
+// Lo que va entre los "---" corre en el build (Node), nunca en el navegador.
+import '../styles/tokens.css';
+import '../styles/lamina.css';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+}
+const { titulo, descripcion } = Astro.props;
+const canonica = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{titulo}</title>
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content={descripcion}>
+    <link rel="canonical" href={canonica}>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234d5a3d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21v-6M12 15c-1.5-3-1.5-7 0-12 1.5 5 1.5 9 0 12zM12 15c-3-1-5.5-3.5-7-8 4 1.5 6.5 4.5 7 8zM12 15c3-1 5.5-3.5 7-8-4 1.5-6.5 4.5-7 8z'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&family=Gloock&display=swap" rel="stylesheet">
+    <!-- Tema guardado antes de pintar, para que no haya un destello claro -->
+    <script is:inline>try { const t = localStorage.getItem('cepario-tema'); if (t) document.documentElement.dataset.tema = t; } catch {}</script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

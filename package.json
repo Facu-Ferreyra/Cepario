@@ -2,13 +2,22 @@
   "name": "cepario",
   "private": true,
   "type": "module",
-  "description": "Atlas web de variedades de cannabis. El sitio no necesita build: estos scripts son solo para los datos.",
+  "description": "Atlas web de variedades de cannabis, hecho con Astro.",
   "license": "Apache-2.0",
   "scripts": {
+    "dev": "astro dev",
+    "build": "npm run datos && astro check && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
     "validar": "node scripts/validate.mjs",
     "datos": "node scripts/build-strains.mjs"
   },
   "devDependencies": {
-    "ajv": "8.20.0"
+    "@astrojs/check": "0.9.12",
+    "ajv": "8.20.0",
+    "typescript": "6.0.2"
+  },
+  "dependencies": {
+    "astro": "7.4.2"
   }
 }
