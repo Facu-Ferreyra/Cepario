@@ -1,0 +1,21 @@
+---
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
+// Una página por variedad: /v/<slug>/. getStaticPaths le dice a Astro qué páginas generar en el build.
+import type { GetStaticPaths } from 'astro';
+import Lamina from '../../layouts/Lamina.astro';
+import PaginaVariedad from '../../components/PaginaVariedad.astro';
+import { catalogo } from '../../lib/catalogo.ts';
+import { descripcion } from '../../lib/datos.ts';
+
+export const getStaticPaths = (async () => {
+  const c = await catalogo();
+  return c.variedades.map((v) => ({ params: { slug: v.id }, props: { v } }));
+}) satisfies GetStaticPaths;
+
+const { v } = Astro.props;
+---
+<Lamina titulo={`${v.nombre}, en Cepario`} descripcion={descripcion(v)}>
+  <PaginaVariedad v={v} />
+</Lamina>

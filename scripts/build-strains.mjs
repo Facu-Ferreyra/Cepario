@@ -5,31 +5,27 @@
 //   1. data/importados/*.json  datos importados de fuentes externas (hoy: Kushy)
 //   2. data/fuentes.json       fuentes declaradas por quienes aportan
 //   3. data/aportes/<slug>.json aportes de la comunidad, uno por variedad
-// Además genera lo que carga el sitio: data/indice.json (resumen de todas las variedades) y
-// data/v/<slug>.json (detalle de cada una). data/strains.json queda como descarga completa.
-// Y a partir de los mismos datos genera las páginas estáticas v/<slug>/index.html y sitemap.xml.
-// Uso:  node scripts/build-strains.mjs
+// data/strains.json es lo que lee la colección de Astro (src/content.config.ts) para armar las
+// páginas, y queda además como descarga completa. También genera public/data/indice.json: el
+// resumen liviano que descarga el buscador.
+// Uso:  npm run datos   (o node scripts/build-strains.mjs)
 //
 // Regla de combinación: si un aporte trae un campo, reemplaza al importado (el campo entero).
 // Un aporte para un slug que no existe crea una variedad nueva (y entonces debe traer "nombre").
 // El resultado es determinístico: correrlo dos veces da el mismo archivo.
 
-import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  DIR_DATA, DIR_IMPORTADOS, DIR_APORTES, ARCHIVO_FUENTES, CAMPOS, CAMPOS_FICHA,
-  leerJSON, listarJSON, ordenarPorNombre,
-} from './lib/datos.mjs';
-import { generarPaginas } from './lib/paginas.mjs';
-import { tendenciasVioleta } from './lib/violeta.mjs';
-import { resumir } from '../js/datos.js';
+import { DIR_DATA, DIR_IMPORTADOS, DIR_APORTES, ARCHIVO_FUENTES, CAMPOS, ROOT, leerJSON, listarJSON } from './lib/datos.mjs';
+import { tendenciasVioleta } from '../src/lib/violeta.ts';
+import { resumir, ordenarPorNombre, CAMPOS_FICHA } from '../src/lib/datos.ts';
 
 const errores = [];
 
 /* ---------- 1. Importados ---------- */
-/** @type {Object<string, import('../js/tipos.js').Fuente>} */
+/** @type {Object<string, import('../src/lib/esquema.ts').Fuente>} */
 const fuentes = {};
-/** @type {Map<string, import('../js/tipos.js').Variedad>} */
+/** @type {Map<string, import('../src/lib/esquema.ts').Variedad>} */
 const porSlug = new Map();
 for (const { archivo, ruta } of listarJSON(DIR_IMPORTADOS)) {
   const db = leerJSON(ruta);
@@ -51,7 +47,7 @@ for (const [clave, f] of Object.entries(leerJSON(ARCHIVO_FUENTES))) {
 const aportes = listarJSON(DIR_APORTES);
 let nuevas = 0, camposAportados = 0;
 for (const { archivo, ruta, slug } of aportes) {
-  /** @type {import('../js/tipos.js').Aporte} */
+  /** @type {import('../src/lib/esquema.ts').Aporte} */
   const a = leerJSON(ruta);
   let v = porSlug.get(slug);
   if (!v) {
@@ -93,23 +89,16 @@ const fuentesUsadas = Object.fromEntries(Object.entries(fuentes).filter(([k]) =>
 
 /* ---------- 5. Salida ---------- */
 // Una variedad por línea: el archivo sigue siendo compacto y los diffs muestran qué cambió
-const json = `{"version":1,"campos":${JSON.stringify(CAMPOS_FICHA)},` +
+const json = `{"version":1,"campos":${JSON.stringify(CAMPOS_FICHA.map(([c]) => c))},` +
   `"fuentes":${JSON.stringify(fuentesUsadas)},\n"variedades":[\n` +
   variedades.map((v) => JSON.stringify(v)).join(',\n') + '\n]}\n';
 writeFileSync(join(DIR_DATA, 'strains.json'), json);
 
-// Nivel 1: índice liviano para buscador, filtros y navegación (más las fuentes, que usa toda ficha).
-// Incluye el nivel de violeta, que se calcula acá porque depende de todo el linaje.
+// Índice liviano para el buscador. Incluye el nivel de violeta, que depende de todo el linaje.
 const violeta = tendenciasVioleta(variedades);
-writeFileSync(join(DIR_DATA, 'indice.json'), `{"version":1,"fuentes":${JSON.stringify(fuentesUsadas)},\n"variedades":[\n` +
+const DIR_PUBLICO = join(ROOT, 'public', 'data');
+mkdirSync(DIR_PUBLICO, { recursive: true });
+writeFileSync(join(DIR_PUBLICO, 'indice.json'), '{"version":2,\n"variedades":[\n' +
   variedades.map((v) => JSON.stringify(resumir(v, violeta.get(v.id)))).join(',\n') + '\n]}\n');
 
-// Nivel 2: una ficha completa por archivo. Se borra la carpeta para no dejar variedades viejas.
-const DIR_DETALLE = join(DIR_DATA, 'v');
-rmSync(DIR_DETALLE, { recursive: true, force: true });
-mkdirSync(DIR_DETALLE, { recursive: true });
-for (const v of variedades) writeFileSync(join(DIR_DETALLE, `${v.id}.json`), JSON.stringify(v) + '\n');
-
-const paginas = generarPaginas({ fuentes: fuentesUsadas, variedades });
-
-console.log(`OK: ${variedades.length} variedades · ${aportes.length} aportes (${camposAportados} campos, ${nuevas} variedades nuevas) · ${paginas} páginas + sitemap.xml`);
+console.log(`OK: ${variedades.length} variedades, ${aportes.length} aportes (${camposAportados} campos, ${nuevas} variedades nuevas).`);

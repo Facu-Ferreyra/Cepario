@@ -1,0 +1,58 @@
+# Copyright 2026 Facundo Agustín Ferreyra
+# SPDX-License-Identifier: Apache-2.0
+
+# Construye el sitio con Astro y lo publica en GitHub Pages.
+# Corre en cada push a main, todos los días a las 03:00 UTC (medianoche en Argentina) para que
+# cambie la variedad del día, y a mano desde la pestaña Actions.
+# Requiere: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+name: Desplegar
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un despliegue a la vez; si llega otro, espera en lugar de cancelar el que está publicando
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construir:
+    name: Construir el sitio
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar datos, revisar tipos y construir
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  publicar:
+    name: Publicar en GitHub Pages
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - id: despliegue
+        uses: actions/deploy-pages@v5

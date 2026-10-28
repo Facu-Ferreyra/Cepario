@@ -43,11 +43,11 @@ No edites `data/strains.json`: es un archivo generado y se pisa al regenerar. Lo
    Hay un ejemplo completo en `data/aportes/_afghan-big-bud.json` (los archivos que empiezan con `_`
    son ejemplos: se validan pero no se publican).
 
-3. **Validar y regenerar** (la primera vez, `npm install` para instalar el validador):
+3. **Validar y regenerar** (la primera vez, `npm install`; hace falta Node 22.23 o más nuevo):
 
    ```bash
-   node scripts/validate.mjs
-   node scripts/build-strains.mjs
+   npm run validar
+   npm run datos
    ```
 
    Incluí los archivos generados en el PR. El CI corre lo mismo en cada pull request y falla si un
@@ -55,8 +55,9 @@ No edites `data/strains.json`: es un archivo generado y se pisa al regenerar. Lo
 
 ### Qué revisa la validación
 
-- Forma de cada campo según `schema/aporte.schema.json` y `schema/fuentes.schema.json`
-  (tu editor puede usarlos para autocompletar gracias a la clave `"$schema"`).
+- Forma de cada campo según el esquema de `src/lib/esquema.ts`, el mismo que usa el sitio al
+  construirse. De ahí se generan `schema/aporte.schema.json` y `schema/fuentes.schema.json`, que
+  tu editor usa para autocompletar gracias a la clave `"$schema"` (no se editan a mano).
 - Rangos: THC entre 0 y 40 %, CBD entre 0 y 30 %, floración entre 4 y 20 semanas, `min ≤ max`.
 - Genética: `indica + sativa` tiene que sumar 100.
 - Fuente: tiene que existir y su licencia tiene que ser abierta (ODbL, DbCL, PDDL, CC0, CC-BY 4.0 o MIT).
@@ -78,14 +79,18 @@ No edites `data/strains.json`: es un archivo generado y se pisa al regenerar. Lo
 
 ## Reglas para código
 
-- JavaScript sin paso de build: la página tiene que seguir funcionando servida como archivos estáticos.
-- Cada archivo de código (`.js`, `.mjs`, `.css`, `.yml`, `index.html`) empieza con el aviso de licencia
-  (el CI lo comprueba). En JavaScript:
+- El sitio está hecho con Astro y TypeScript estricto: `npm run build` tiene que pasar sin errores
+  (incluye `astro check`). Todo lo que pueda ser HTML estático, lo es; React se usa solo en islas.
+- Cada página se tiene que poder leer sin JavaScript.
+- Cada archivo de código (`.ts`, `.tsx`, `.astro`, `.js`, `.mjs`, `.css`, `.yml`) empieza con el aviso
+  de licencia (el CI lo comprueba). En TypeScript y JavaScript:
 
-  ```js
+  ```ts
   // Copyright 2026 Facundo Agustín Ferreyra
   // SPDX-License-Identifier: Apache-2.0
   ```
+
+  En un `.astro`, va dentro del bloque `---` del principio.
 
   Si el archivo es tuyo, podés sumar tu nombre en otra línea `Copyright`.
 - Probá en un ancho de 375 px y con `prefers-reduced-motion` antes de enviar.

@@ -6,57 +6,94 @@ Catálogo informativo de variedades de cannabis con visor 3D procedural (Three.j
 Cada dato muestra de qué fuente viene y con qué licencia.
 
 - Sitio: https://facu-ferreyra.github.io/Cepario/
-- Sin frameworks ni paso de build: HTML, CSS y módulos ES nativos servidos como archivos estáticos.
-- Datos en JSON estático, generados por scripts de Node a partir de fuentes abiertas y aportes.
+- Hecho con [Astro](https://astro.build) 7 y TypeScript estricto: cada variedad es una página HTML
+  estática (legible sin JavaScript) y lo interactivo se carga como islas (el visor 3D y el buscador).
+- Datos en JSON, combinados por scripts de Node a partir de fuentes abiertas y aportes.
 
-## Probar en local
+## Correrlo en local
 
-`fetch()` no funciona abriendo el archivo con doble clic (`file://`). Serví la carpeta:
+Hace falta **Node 22.23 o más nuevo** (el CI usa Node 24).
 
 ```bash
-npx serve .
+npm install        # la primera vez
+npm run dev        # servidor de desarrollo en http://localhost:4321/Cepario/
 ```
 
-Y abrí `http://localhost:3000/` (o la página de una variedad, por ejemplo `/v/afghan-big-bud/`).
+Otros comandos:
+
+| Comando | Qué hace |
+|---|---|
+| `npm run build` | Genera los datos, revisa los tipos (`astro check`) y construye el sitio en `dist/` |
+| `npm run preview` | Sirve `dist/` tal como quedaría publicado |
+| `npm run check` | Solo revisa los tipos |
+| `npm run validar` | Valida los aportes y las fuentes |
+| `npm run datos` | Regenera `data/strains.json`, `public/data/indice.json` y `schema/*.json` |
+
+El build genera unas 9.500 páginas en menos de un minuto.
 
 ## Estructura
 
 ```
-index.html                     Página principal (solo HTML)
-styles.css                     Estilos
-js/
-  main.js                      Arranque: carga del índice, filtros, navegación, URL, aviso de edad
-  datos.js                     Estado compartido, utilidades y carga de fichas (data/v/<slug>.json)
-  tipos.js                     Tipos del esquema de datos (JSDoc, no ejecuta nada)
-  bud.js                       Generador procedural del cogollo (Three.js)
-  viewer.js                    Escena 3D, cámara, interacción y transiciones
-  search.js                    Buscador (combobox accesible)
-  ficha.js                     Ficha de la variedad (pinta y maneja clicks)
-  ficha-html.js                HTML de la ficha (lo usan el navegador y el build)
+src/
+  content.config.ts            Colecciones "variedades" y "fuentes" (leen data/strains.json)
+  lib/
+    esquema.ts                 Forma de los datos (Zod): ÚNICO lugar donde se define
+    datos.ts                   Textos y utilidades compartidas (build, páginas y navegador)
+    catalogo.ts                Orden, vecinas, padres e hijos, contadores, variedad del día
+    violeta.ts                 Color del modelo según datos, linaje o nombre
+    bud.ts                     Generador procedural del cogollo (Three.js)
+    viewer.ts                  Escena 3D, cámara, interacción y transiciones
+    navegacion.ts              Filtros, contador y variedad al azar
+  components/
+    PaginaVariedad.astro       La lámina completa: barra lateral, ejemplar y etiqueta
+    Ficha.astro                La etiqueta de herbario (HTML estático)
+    Visor.astro                Isla del visor 3D (canvas con transition:persist)
+    Buscador.tsx               Isla de React del buscador (combobox accesible)
+  layouts/Lamina.astro         <head>, íconos, tema, aviso +18 y ClientRouter
+  pages/
+    index.astro                Portada: la variedad del día
+    v/[slug].astro             Una página por variedad (getStaticPaths)
+    404.astro                  Página para direcciones que no existen
+  styles/
+    tokens.css                 Colores, tipografías y modo oscuro
+    lamina.css                 El resto de los estilos
 
 data/
   aportes/<slug>.json          ✍️  Aportes de la comunidad, uno por variedad
   fuentes.json                 ✍️  Fuentes que usan los aportes
   importados/kushy.json        ⚙️  Kushy ya limpiado (desde el CSV, con importar-kushy.mjs)
-  indice.json                  ⚙️  Resumen de todas las variedades: lo que carga el sitio
-  v/<slug>.json                ⚙️  Ficha completa de cada variedad
-  strains.json                 ⚙️  Dataset completo (para descargar)
+  strains.json                 ⚙️  Dataset completo: lo lee la colección y se puede descargar
   licencias/                   Licencias de las fuentes de datos
   LICENSE                      ODbL 1.0
+public/data/indice.json        ⚙️  Resumen liviano de todas las variedades (para el buscador)
+schema/*.json                  ⚙️  JSON Schema para el editor, generado desde src/lib/esquema.ts
 
-v/<slug>/index.html            ⚙️  Página estática por variedad (SEO, legible sin JS)
-sitemap.xml                    ⚙️  Mapa del sitio para buscadores
-
-schema/                        JSON Schema de aportes y de fuentes
 scripts/
-  build-strains.mjs            Combina importados + aportes y genera todo lo marcado con ⚙️
-  validate.mjs                 Valida aportes y fuentes (lo corre el CI)
+  build-strains.mjs            Combina importados + aportes y genera lo marcado con ⚙️
+  validate.mjs                 Valida aportes y fuentes con el esquema de src/lib/esquema.ts
+  esquemas.ts                  Genera schema/*.json desde el esquema Zod
   importar-kushy.mjs           CSV de Kushy -> data/importados/kushy.json
-  lib/                         Código compartido por los scripts
-.github/workflows/datos.yml    CI: licencias, validación y build en cada pull request
+  lib/datos.mjs                Rutas y utilidades de los scripts
+
+.github/workflows/
+  datos.yml                    CI: licencias, validación y datos al día en cada pull request
+  desplegar.yml                Construye y publica en GitHub Pages (en cada push a main y a diario)
 ```
 
 ✍️ = se edita a mano · ⚙️ = generado, **no editar** (se pisa al regenerar).
+
+## Cómo funciona
+
+- **Páginas.** `src/pages/v/[slug].astro` usa `getStaticPaths()` para generar `/v/<slug>/` por cada
+  variedad de la colección, con su título, descripción y URL canónica. El linaje y anterior/siguiente
+  son enlaces reales; la página se lee completa sin JavaScript.
+- **Visor 3D.** Es una isla sin framework. Con `<ClientRouter />` (view transitions) la navegación
+  entre variedades no recarga la página, y el `<canvas>` lleva `transition:persist`: la escena no se
+  recrea y el modelo cambia con su animación. Anterior y siguiente se precargan apenas se ven.
+- **Buscador.** Isla de React (`client:idle`) que descarga `public/data/indice.json` al primer uso.
+- **Variedad del día.** Se elige al construir el sitio; por eso `desplegar.yml` reconstruye todos
+  los días a las 03:00 UTC.
+- **Enlaces viejos.** `/Cepario/#slug` redirige a `/Cepario/v/slug/`.
 
 ## Contribuir
 
@@ -68,47 +105,34 @@ El camino corto para sumar o corregir datos (el detalle está en [CONTRIBUTING.m
 3. Validá y regenerá:
 
    ```bash
-   npm install                    # solo la primera vez (instala el validador)
-   node scripts/validate.mjs
-   node scripts/build-strains.mjs
+   npm run validar
+   npm run datos
    ```
 
 4. Abrí un pull request con tu aporte y los archivos generados. El CI repite estos pasos y falla
-   si algo no valida o si los archivos generados no están al día.
+   si algo no valida o si los archivos generados no están al día. Si un dato llegara a pasar con
+   una forma inválida, el build del sitio también se detiene y dice qué variedad y qué campo fallan.
 
 No se aceptan datos de sitios con "todos los derechos reservados" ni afirmaciones médicas.
 
 ## Cómo se generan los datos
 
-`node scripts/build-strains.mjs` combina `data/importados/*.json` con `data/aportes/*.json`. Si un
-aporte trae un campo, reemplaza al importado; un aporte para un slug inexistente crea una variedad
-nueva. El resultado es determinístico: regenerar nunca pierde aportes y correrlo dos veces da lo mismo.
-
-Además genera las páginas `v/<slug>/index.html` (título, descripción y ficha en HTML; el visor 3D
-se carga encima) y `sitemap.xml`. La URL pública del sitio está en `scripts/lib/datos.mjs`
-(`URL_SITIO`). Los enlaces viejos `index.html#slug` siguen funcionando: muestran la variedad y la
-URL pasa a ser `v/<slug>/`.
+`npm run datos` combina `data/importados/*.json` con `data/aportes/*.json`. Si un aporte trae un
+campo, reemplaza al importado; un aporte para un slug inexistente crea una variedad nueva. El
+resultado es determinístico: regenerar nunca pierde aportes y correrlo dos veces da lo mismo.
 
 Re-importar Kushy solo hace falta si cambia el CSV o la forma de limpiarlo:
 
 ```bash
 git clone https://github.com/kushyapp/cannabis-dataset
 node scripts/importar-kushy.mjs cannabis-dataset/Dataset/Strains/strains-kushy_api.2017-11-14.csv
-node scripts/build-strains.mjs
+npm run datos
 ```
-
-## Cómo carga los datos el sitio
-
-1. Al abrir, solo se descarga `data/indice.json`: id, nombre, tipo y criador de cada variedad, más
-   `datos` (1 = tiene algún dato, 2 = tiene sabores y efectos) y `padres`. Con eso funcionan el
-   buscador, los filtros, el contador, la variedad del día y el modelo 3D.
-2. La ficha completa (`data/v/<slug>.json`) se pide al mostrar la variedad. Las vecinas (anterior y
-   siguiente) se precargan, así que pasar de una a otra no espera a la red.
 
 ## Formato de los datos
 
 Cada dato lleva su fuente: `{ "valor": ..., "fuente": "<clave>" }`, y la clave tiene que existir en
-el bloque `fuentes`. Ejemplo ilustrativo de una variedad completa (`data/v/<slug>.json`):
+`data/fuentes.json` o en los datos importados. Ejemplo ilustrativo de una variedad:
 
 ```json
 {
@@ -134,14 +158,12 @@ el bloque `fuentes`. Ejemplo ilustrativo de una variedad completa (`data/v/<slug
 | `padres` | lista de slugs | |
 
 La ficha muestra los campos en este orden; los ausentes se juntan en una línea "Sin determinar".
+La definición exacta (y los tipos de TypeScript que salen de ella) está en `src/lib/esquema.ts`.
 
 **Color del modelo 3D.** No hay azar: el violeta sale de `antocianinas` (si hay dato). Si no hay
 dato, se hereda de los padres: si alguno es violeta alto o medio, la hija es media. Si tampoco, se
 usa una pista en el nombre ("purple", "grape", "GDP"…, sin contar "grapefruit"), que solo pinta el
-modelo y no aparece en la ficha. Si nada aplica, el cogollo es verde. Lo calcula
-`scripts/lib/violeta.mjs` y queda en `data/indice.json` como `violeta`.
-Los tipos completos (`Variedad`, `Resumen`, `Fuente`, `Aporte`…) están documentados con JSDoc en
-`js/tipos.js`; con el `jsconfig.json` del repo, VS Code los muestra al pasar el mouse.
+modelo y no aparece en la ficha. Si nada aplica, el cogollo es verde. Lo calcula `src/lib/violeta.ts`.
 
 ## Fuentes
 
@@ -157,7 +179,7 @@ con "reducir movimiento" o si el visor baja de 50 FPS, se dibuja sin esos efecto
 
 ## Licencias
 
-- **Código** (`index.html`, `styles.css`, `js/`, `scripts/`): [Apache License 2.0](LICENSE). Ver también [NOTICE](NOTICE).
-- **Datos** (`data/`): [Open Database License (ODbL) 1.0](data/LICENSE);
+- **Código** (`src/`, `scripts/`, configuración): [Apache License 2.0](LICENSE). Ver también [NOTICE](NOTICE).
+- **Datos** (`data/`, `public/data/`): [Open Database License (ODbL) 1.0](data/LICENSE);
   contenidos individuales bajo DbCL 1.0.
 - **Datos de Kushy**: MIT, aviso conservado en `data/licencias/kushy-LICENSE.txt`.

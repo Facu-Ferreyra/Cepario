@@ -1,0 +1,38 @@
+---
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
+// Isla del visor 3D. El <canvas> lleva transition:persist: al navegar entre variedades no se
+// recrea (mantiene el contexto WebGL, la escena y el loop) y el modelo cambia con su animación.
+// No hace falta un framework: es JavaScript común, así que no lleva directiva client:*.
+---
+<canvas id="gl" aria-hidden="true" transition:persist></canvas>
+
+<script>
+  // Los <script> de Astro se empaquetan y corren UNA sola vez, aunque se navegue entre páginas.
+  // Por eso todo se engancha a los eventos de navegación del ClientRouter.
+  type Visor = typeof import('../lib/viewer.ts');
+  let visor: Visor | null = null;
+  let direccion = 1;
+
+  // Antes de navegar: "anterior" o el botón Atrás del navegador hacen entrar el modelo desde la izquierda
+  document.addEventListener('astro:before-preparation', (e) => {
+    direccion = (e.sourceElement as Element | undefined)?.id === 'prev' || e.direction === 'back' ? -1 : 1;
+  });
+
+  // Al terminar cada carga o navegación. La primera vez se descarga Three.js (import dinámico).
+  document.addEventListener('astro:page-load', async () => {
+    if (!document.getElementById('gl')) return;   // páginas sin visor (por ejemplo, la 404)
+    if (!visor) {
+      document.getElementById('loader')?.classList.add('show');   // mientras se descarga Three.js
+      visor = await import('../lib/viewer.ts');
+      visor.arrancarVisor();
+    } else {
+      visor.alNavegar(direccion);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') visor?.salirDeFoco();
+  });
+</script>

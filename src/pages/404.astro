@@ -1,0 +1,31 @@
+---
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
+// Página para direcciones que no existen. GitHub Pages la sirve sola (404.html en la raíz del sitio).
+import Lamina from '../layouts/Lamina.astro';
+import Buscador from '../components/Buscador.tsx';
+import { catalogo, urlVariedad } from '../lib/catalogo.ts';
+
+const c = await catalogo();
+---
+<Lamina titulo="Página no encontrada, en Cepario" descripcion="Esta dirección no corresponde a ninguna página de Cepario." indexar={false}>
+  <main class="perdida">
+    <a class="brand" href={import.meta.env.BASE_URL}>Cepario<small class="tagline">Atlas de variedades de cannabis</small></a>
+    <div class="card">
+      <header class="et-cab"><p>Herbario Cepario<br>Ejemplar no registrado</p></header>
+      <h1>No encontramos esta página</h1>
+      <p class="et-faltan">Puede que el enlace esté mal escrito o que la variedad haya cambiado de nombre. Buscala por nombre o por criador:</p>
+      <div class="top"><Buscador client:idle /></div>
+      <p class="fine">O andá a la <a href={import.meta.env.BASE_URL}>portada</a>, o a la variedad del día: <a href={urlVariedad(c.delDia.id)}>{c.delDia.nombre}</a>.</p>
+    </div>
+  </main>
+</Lamina>
+
+<style>
+  .perdida{min-height:100dvh;display:grid;align-content:start;justify-items:start;gap:28px;padding:26px 28px;max-width:560px}
+  .perdida .card{margin:0;max-height:none;overflow:visible;width:100%}
+  .perdida .top{margin-top:14px;font-family:var(--ui)}
+  .perdida .results{color:var(--tinta)}
+  @media (max-width:760px){ .perdida{padding:16px 14px} }
+</style>
