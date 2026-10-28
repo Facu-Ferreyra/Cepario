@@ -5,6 +5,7 @@
 // GitHub Pages bajo /Cepario/, por eso "base": todos los enlaces internos tienen que incluirla.
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://facu-ferreyra.github.io',
@@ -13,5 +14,8 @@ export default defineConfig({
   // Precarga de páginas: los enlaces con data-astro-prefetch (anterior/siguiente) se descargan
   // apenas se ven, así cambiar de variedad no espera a la red. El resto, al pasar el mouse.
   prefetch: { prefetchAll: false, defaultStrategy: 'hover' },
-  integrations: [react()],   // solo para la isla del buscador
+  integrations: [
+    react(),     // solo para la isla del buscador
+    sitemap(),   // sitemap-index.xml con todas las páginas (necesita "site")
+  ],
 });
