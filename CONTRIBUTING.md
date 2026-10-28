@@ -79,14 +79,18 @@ No edites `data/strains.json`: es un archivo generado y se pisa al regenerar. Lo
 
 ## Reglas para código
 
-- JavaScript sin paso de build: la página tiene que seguir funcionando servida como archivos estáticos.
-- Cada archivo de código (`.js`, `.mjs`, `.css`, `.yml`, `index.html`) empieza con el aviso de licencia
-  (el CI lo comprueba). En JavaScript:
+- El sitio está hecho con Astro y TypeScript estricto: `npm run build` tiene que pasar sin errores
+  (incluye `astro check`). Todo lo que pueda ser HTML estático, lo es; React se usa solo en islas.
+- Cada página se tiene que poder leer sin JavaScript.
+- Cada archivo de código (`.ts`, `.tsx`, `.astro`, `.js`, `.mjs`, `.css`, `.yml`) empieza con el aviso
+  de licencia (el CI lo comprueba). En TypeScript y JavaScript:
 
-  ```js
+  ```ts
   // Copyright 2026 Facundo Agustín Ferreyra
   // SPDX-License-Identifier: Apache-2.0
   ```
+
+  En un `.astro`, va dentro del bloque `---` del principio.
 
   Si el archivo es tuyo, podés sumar tu nombre en otra línea `Copyright`.
 - Probá en un ancho de 375 px y con `prefers-reduced-motion` antes de enviar.
