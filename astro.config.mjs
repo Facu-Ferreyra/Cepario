@@ -9,4 +9,7 @@ export default defineConfig({
   site: 'https://facu-ferreyra.github.io',
   base: '/Cepario',
   trailingSlash: 'always',   // las fichas viven en /v/<slug>/, como en la versión anterior
+  // Precarga de páginas: los enlaces con data-astro-prefetch (anterior/siguiente) se descargan
+  // apenas se ven, así cambiar de variedad no espera a la red. El resto, al pasar el mouse.
+  prefetch: { prefetchAll: false, defaultStrategy: 'hover' },
 });

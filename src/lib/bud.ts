@@ -3,26 +3,28 @@
 
 // Generador procedural del cogollo: paleta determinística por variedad y geometría Three.js.
 import * as THREE from 'three';
+import type { Tipo, NivelVioleta } from './esquema.ts';
 
 /* =========================================================
    PALETA POR VARIEDAD (determinística: misma variedad = mismo cogollo)
    ========================================================= */
-export function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
-function rngFrom(seed) { // mulberry32: generador pseudoaleatorio con semilla
+export function hashStr(s: string): number { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rngFrom(seed: number): () => number { // mulberry32: generador pseudoaleatorio con semilla
   let a = seed >>> 0;
   return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
-const FORMA = {
+interface Forma { L: number; W: number; nodos: number; zorro: number; dens: number; luz: number; morado: number; hojas: number }
+const FORMA: Record<Tipo, Forma> = {
   indica:  { L: 1.55, W: 0.62, nodos: 3, zorro: 0.12, dens: 1.0,  luz: 0.27, morado: 0.35, hojas: 18 },
   hibrida: { L: 1.9,  W: 0.54, nodos: 5, zorro: 0.26, dens: 0.88, luz: 0.33, morado: 0.15, hojas: 14 },
   sativa:  { L: 2.3,  W: 0.46, nodos: 7, zorro: 0.45, dens: 0.75, luz: 0.39, morado: 0.05, hojas: 11 },
 };
-/** @typedef {{ id: string, tipo?: import('./tipos.js').Tipo, violeta?: import('./tipos.js').NivelVioleta }} Semilla  Lo único que define el cogollo */
+/** Lo único que define el cogollo. */
+export interface Semilla { id: string; tipo?: Tipo | undefined; violeta?: NivelVioleta | undefined }
 // Intensidad del violeta según el nivel que calcula el build (dato > herencia > nombre). Sin nivel: verde.
-const VIOLETA = { alta: 0.85, media: 0.55, baja: 0.25 };
+const VIOLETA: Record<NivelVioleta, number> = { alta: 0.85, media: 0.55, baja: 0.25 };
 
-/** @param {Semilla} v */
-export function paleta(v) {
+export function paleta(v: Semilla) {
   const r = rngFrom(hashStr(v.id));
   const tipo = v.tipo || 'hibrida';
   const F = FORMA[tipo];
@@ -30,13 +32,13 @@ export function paleta(v) {
   // Antes el morado salía al azar. Se siguen consumiendo los mismos números del generador para que
   // forma, pistilos y tricomas de cada variedad no cambien; el color ahora sale de los datos.
   if (r() < F.morado) r();
-  const morado = VIOLETA[v.violeta] ?? 0;
+  const morado = v.violeta ? VIOLETA[v.violeta] : 0;
   const pistiloJoven = r() < 0.15;
   const pistilo = pistiloJoven ? new THREE.Color().setHSL(0.11, 0.3, 0.82) : new THREE.Color().setHSL(0.045 + r() * 0.05, 0.72, 0.42 + r() * 0.12);
   return { r, tipo, F, verde, morado, purpura: new THREE.Color().setHSL(0.78 + r() * 0.06, 0.55, 0.28), pistilo, escarcha: 0.45 + r() * 0.5 };
 }
-/** Fondo CSS de la muestra de color (buscador, ficha, variedad del día). @param {Semilla} v @returns {string} */
-export function swatchCSS(v) {
+/** Fondo CSS de la muestra de color (buscador). */
+export function swatchCSS(v: Semilla): string {
   const p = paleta(v);
   const base = p.verde.clone().lerp(p.purpura, p.morado * 0.6);
   const claro = base.clone().lerp(new THREE.Color(1, 1, 1), 0.25 + p.escarcha * 0.25).getStyle();
@@ -52,9 +54,9 @@ export function swatchCSS(v) {
    ========================================================= */
 const UP = new THREE.Vector3(0, 1, 0);
 const GEO = (() => {
-  const shared = (g) => { g.userData.shared = true; return g; };
+  const shared = <G extends THREE.BufferGeometry>(g: G): G => { g.userData['shared'] = true; return g; };
   // Cáliz: gota con la punta hacia +Y
-  const pts = [];
+  const pts: THREE.Vector2[] = [];
   for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push(new THREE.Vector2(0.42 * Math.pow(Math.sin(Math.PI * t), 0.8) * (1 - 0.55 * t) + 0.001, t - 0.15)); }
   const caliz = shared(new THREE.LatheGeometry(pts, 9));
   // Pistilo: tubito curvo de largo ~1
@@ -63,7 +65,7 @@ const GEO = (() => {
   const tricoma = shared(new THREE.IcosahedronGeometry(1, 0));
   // Hojas de azúcar: 3 variantes de hoja dentada y curvada
   const hojas = [0.18, 0.22, 0.26].map((ancho, k) => {
-    const s = new THREE.Shape(), N = 14, der = [];
+    const s = new THREE.Shape(), N = 14, der: [number, number][] = [];
     for (let i = 1; i < N; i++) { const t = i / N; der.push([ancho * Math.pow(Math.sin(Math.PI * t), 0.9) * (1 - 0.3 * t) * (i % 2 ? 1 : 0.8), t]); }
     s.moveTo(0, 0);
     der.forEach(([x, y]) => s.lineTo(x, y));
@@ -71,7 +73,7 @@ const GEO = (() => {
     [...der].reverse().forEach(([x, y]) => s.lineTo(-x, y));
     s.lineTo(0, 0);
     const g = new THREE.ShapeGeometry(s, 2);
-    const p = g.attributes.position, uv = g.attributes.uv;
+    const p = g.attributes['position'] as THREE.BufferAttribute, uv = g.attributes['uv'] as THREE.BufferAttribute;
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), y = p.getY(i);
       p.setZ(i, (0.3 + k * 0.08) * y * y + 0.5 * Math.abs(x));
@@ -89,43 +91,44 @@ const GEO = (() => {
    Se generan una sola vez con semilla fija y las comparten todas las variedades.
    ========================================================= */
 /** Ruido de valor que se repite en los bordes (para texturas que se pueden repetir). */
-function ruidoRepetible(celdas, r) {
+function ruidoRepetible(celdas: number, r: () => number): (x: number, y: number) => number {
   const v = Float32Array.from({ length: celdas * celdas }, r);
-  const at = (i, j) => v[((j % celdas + celdas) % celdas) * celdas + ((i % celdas + celdas) % celdas)];
-  const suave = (t) => t * t * (3 - 2 * t);
+  const at = (i: number, j: number): number => v[((j % celdas + celdas) % celdas) * celdas + ((i % celdas + celdas) % celdas)]!;
+  const suave = (t: number): number => t * t * (3 - 2 * t);
   return (x, y) => { // x, y en [0,1)
     const fx = x * celdas, fy = y * celdas, i = Math.floor(fx), j = Math.floor(fy), u = suave(fx - i), w = suave(fy - j);
     return (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - w) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * w;
   };
 }
+interface ParTexturas { normal: THREE.CanvasTexture; rugosidad: THREE.CanvasTexture }
 /**
  * Arma normalMap y roughnessMap a partir de un mapa de alturas.
- * @param {number} w @param {number} h
- * @param {(u: number, v: number) => [number, number]} muestra  devuelve [altura, rugosidad] para u, v ∈ [0,1)
- * @param {number} relieve  cuánto se inclina la normal por unidad de pendiente
+ * @param muestra  devuelve [altura, rugosidad] para u, v ∈ [0,1)
+ * @param relieve  cuánto se inclina la normal por unidad de pendiente
  */
-function texturasDesdeAlturas(w, h, muestra, relieve) {
+function texturasDesdeAlturas(w: number, h: number, muestra: (u: number, v: number) => [number, number], relieve: number): ParTexturas {
   const alt = new Float32Array(w * h), rug = new Float32Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const [a, r] = muestra(x / w, 1 - y / h);  // la fila 0 del canvas es la parte de arriba (v = 1)
     alt[y * w + x] = a; rug[y * w + x] = r;
   }
-  const lienzo = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const lienzo = (): HTMLCanvasElement => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
   const cn = lienzo(), cr = lienzo();
-  const dn = cn.getContext('2d').createImageData(w, h), dr = cr.getContext('2d').createImageData(w, h);
-  const A = (x, y) => alt[((y + h) % h) * w + ((x + w) % w)];
+  const xn = cn.getContext('2d')!, xr = cr.getContext('2d')!;
+  const dn = xn.createImageData(w, h), dr = xr.createImageData(w, h);
+  const A = (x: number, y: number): number => alt[((y + h) % h) * w + ((x + w) % w)]!;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const dx = (A(x + 1, y) - A(x - 1, y)) * relieve, dy = (A(x, y - 1) - A(x, y + 1)) * relieve;
     const k = 1 / Math.hypot(dx, dy, 1), o = (y * w + x) * 4;
     dn.data[o] = (-dx * k * 0.5 + 0.5) * 255; dn.data[o + 1] = (-dy * k * 0.5 + 0.5) * 255; dn.data[o + 2] = (k * 0.5 + 0.5) * 255; dn.data[o + 3] = 255;
-    dr.data.fill(Math.max(0, Math.min(255, rug[y * w + x] * 255)), o, o + 3); dr.data[o + 3] = 255;
+    dr.data.fill(Math.max(0, Math.min(255, rug[y * w + x]! * 255)), o, o + 3); dr.data[o + 3] = 255;
   }
-  cn.getContext('2d').putImageData(dn, 0, 0); cr.getContext('2d').putImageData(dr, 0, 0);
-  const tex = (c) => { const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
+  xn.putImageData(dn, 0, 0); xr.putImageData(dr, 0, 0);
+  const tex = (c: HTMLCanvasElement): THREE.CanvasTexture => { const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
   return { normal: tex(cn), rugosidad: tex(cr) };
 }
-let TEX = null;
-function texturas() {
+let TEX: { hoja: ParTexturas; caliz: ParTexturas } | null = null;
+function texturas(): { hoja: ParTexturas; caliz: ParTexturas } {
   if (TEX) return TEX;
   const r = rngFrom(0xc3a1);
   // Hoja de azúcar: nervio central hundido, nervaduras laterales en diagonal y grano fino
@@ -156,12 +159,12 @@ function texturas() {
  * Tricomas: material estándar + destello tipo escarcha. Cada tricoma tiene una "faceta" con
  * orientación propia (sale de su posición, así que es determinística) y brilla cuando esa faceta
  * queda a mitad de camino entre la luz y la cámara (vector medio de Blinn-Phong).
- * @param {number} brillo  intensidad del destello (depende de la escarcha de la variedad)
+ * @param brillo  intensidad del destello (depende de la escarcha de la variedad)
  */
-function materialTricomas(brillo) {
+function materialTricomas(brillo: number): THREE.MeshStandardMaterial {
   const m = new THREE.MeshStandardMaterial({ color: 0xdedbcc, roughness: 0.45, metalness: 0 });
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uBrillo = { value: brillo };
+    sh.uniforms['uBrillo'] = { value: brillo };
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vFaceta;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -186,11 +189,10 @@ function materialTricomas(brillo) {
  * Translucidez simulada (más barata que transmission, que pide un render extra por frame):
  * suma luz cuando la fuente queda detrás de la pieza (contraluz) y un borde claro en los contornos,
  * teñidos con el color de la superficie, como la luz que atraviesa un tejido fino.
- * @param {THREE.MeshPhysicalMaterial} m @param {number} fuerza
  */
-function translucidez(m, fuerza) {
+function translucidez(m: THREE.MeshPhysicalMaterial, fuerza: number): void {
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uTransluc = { value: fuerza };
+    sh.uniforms['uTransluc'] = { value: fuerza };
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uTransluc;')
       .replace('#include <opaque_fragment>', `
@@ -208,11 +210,12 @@ function translucidez(m, fuerza) {
   };
 }
 
-/** @param {Semilla} v @returns {THREE.Group} */
-export function construirCogollo(v) {
+interface DatoCaliz { pos: THREE.Vector3; dir: THREE.Vector3; s: number; y: number }
+
+export function construirCogollo(v: Semilla): THREE.Group {
   const p = paleta(v), r = p.r, F = p.F, T = texturas();
   const L = F.L * (0.9 + r() * 0.2), W = F.W * (0.9 + r() * 0.2);
-  const radio = (y) => { // perfil del cogollo según la altura y∈[0,1]
+  const radio = (y: number): number => { // perfil del cogollo según la altura y∈[0,1]
     const base = Math.pow(Math.sin(Math.PI * Math.min(1, y * 0.94 + 0.06)), 0.55) * (1 - 0.4 * y);
     const nodo = 1 - F.zorro + F.zorro * Math.pow(Math.abs(Math.sin((y * F.nodos + 0.5) * Math.PI)), 1.5);
     return W * base * nodo;
@@ -222,7 +225,7 @@ export function construirCogollo(v) {
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), dir = new THREE.Vector3(), c = new THREE.Color();
 
   // Núcleo: rellena huecos entre cálices
-  const perfil = [];
+  const perfil: THREE.Vector2[] = [];
   for (let i = 0; i <= 40; i++) { const y = i / 40; perfil.push(new THREE.Vector2(radio(y) * 0.7, y * L - L / 2)); }
   perfil.push(new THREE.Vector2(0.001, L / 2 + 0.02));
   const nucleo = new THREE.Mesh(new THREE.LatheGeometry(perfil, 18),
@@ -242,7 +245,7 @@ export function construirCogollo(v) {
   });
   translucidez(matCaliz, 0.55);
   const caliz = new THREE.InstancedMesh(GEO.caliz, matCaliz, N);
-  const datosCaliz = [];
+  const datosCaliz: DatoCaliz[] = [];
   const GOLD = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < N; i++) {
     const y = (i + 0.5) / N, th = i * GOLD, rr = radio(y) * (0.78 + 0.22 * r());
@@ -288,7 +291,7 @@ export function construirCogollo(v) {
   const pist = new THREE.InstancedMesh(GEO.pistilo, new THREE.MeshStandardMaterial({ roughness: 0.55 }), NP);
   const roll = new THREE.Quaternion(), d2 = new THREE.Vector3();
   for (let i = 0; i < NP; i++) {
-    const k = datosCaliz[Math.floor(Math.pow(r(), 0.8) * (N - 1))];
+    const k = datosCaliz[Math.floor(Math.pow(r(), 0.8) * (N - 1))]!;
     pos.copy(k.pos).addScaledVector(k.dir, k.s * 0.85);
     d2.copy(k.dir).add(new THREE.Vector3(r() - 0.5, r() - 0.3, r() - 0.5).multiplyScalar(0.9)).normalize();
     q.setFromUnitVectors(UP, d2);
@@ -309,7 +312,7 @@ export function construirCogollo(v) {
   const rnd = new THREE.Vector3();
   q.identity();
   for (let i = 0; i < NT; i++) {
-    const k = datosCaliz[Math.floor(r() * N)];
+    const k = datosCaliz[Math.floor(r() * N)]!;
     rnd.set(r() - 0.5, r() - 0.5, r() - 0.5).normalize();
     if (rnd.dot(k.dir) < 0) rnd.negate();
     pos.copy(k.pos).addScaledVector(rnd, k.s * (0.38 + r() * 0.1)).addScaledVector(k.dir, k.s * r() * 0.5);

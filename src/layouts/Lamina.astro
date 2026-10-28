@@ -6,6 +6,7 @@
 // Lo que va entre los "---" corre en el build (Node), nunca en el navegador.
 import '../styles/tokens.css';
 import '../styles/lamina.css';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   titulo: string;
@@ -28,7 +29,18 @@ const canonica = new URL(Astro.url.pathname, Astro.site);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&family=Gloock&display=swap" rel="stylesheet">
     <!-- Tema guardado antes de pintar, para que no haya un destello claro -->
-    <script is:inline>try { const t = localStorage.getItem('cepario-tema'); if (t) document.documentElement.dataset.tema = t; } catch {}</script>
+    <script is:inline>
+      try { const t = localStorage.getItem('cepario-tema'); if (t) document.documentElement.dataset.tema = t; } catch {}
+      // Al navegar, el ClientRouter copia los atributos del <html> de la página nueva: el tema elegido se pasa a mano
+      if (!window.__temaCepario) {
+        window.__temaCepario = true;
+        document.addEventListener('astro:before-swap', (e) => {
+          const t = document.documentElement.dataset.tema;
+          if (t) e.newDocument.documentElement.dataset.tema = t;
+        });
+      }
+    </script>
+    <ClientRouter />
     <!-- Sin JavaScript: la etiqueta, el linaje y anterior/siguiente funcionan; lo interactivo se oculta -->
     <noscript><style>html,body{height:auto}body{overflow:auto}.hero{height:auto;min-height:100vh}.stage,.nav,#navT,.top,.closeup,#mSearch,#rand,.fsel{display:none}.card{max-height:none;overflow:visible}</style></noscript>
   </head>
@@ -85,7 +97,7 @@ const canonica = new URL(Astro.url.pathname, Astro.site);
           if (msg) msg.hidden = false;
         });
       }
-      avisoDeEdad();
+      document.addEventListener('astro:page-load', avisoDeEdad);
     </script>
   </body>
 </html>

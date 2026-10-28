@@ -8,6 +8,7 @@ import type { Variedad } from '../lib/esquema.ts';
 import { FILTROS, FILTRO_TXT, TIPO_TXT, nf } from '../lib/datos.ts';
 import { catalogo, vecinas, urlVariedad, type Vecina } from '../lib/catalogo.ts';
 import Ficha from './Ficha.astro';
+import Visor from './Visor.astro';
 
 interface Props { v: Variedad }
 const { v } = Astro.props;
@@ -26,7 +27,7 @@ const CORTO = { todas: 'Todas', indica: 'Índicas', sativa: 'Sativas', hibrida: 
 const esTipo = (f: string): boolean => f === 'indica' || f === 'sativa' || f === 'hibrida';
 ---
 <div class="hero" id="hero" data-slug={v.id} data-tipo={v.tipo?.valor} data-violeta={c.violeta.get(v.id)}>
-  <canvas id="gl" aria-hidden="true"></canvas>
+  <Visor />
 
   <header class="mtop">
     <a class="brand" href={import.meta.env.BASE_URL}>Cepario<small class="tagline">Atlas de variedades de cannabis</small></a>
@@ -51,9 +52,9 @@ const esTipo = (f: string): boolean => f === 'indica' || f === 'sativa' || f ===
 
   <section class="main">
     <nav class="navrow" aria-label="Recorrer el catálogo">
-      <a class="nbtn" id="prev" href={urlVariedad(anterior.id)} aria-label={`Variedad anterior: ${anterior.nombre}`}><svg class="ic"><use href="#i-chevl"/></svg></a>
+      <a class="nbtn" id="prev" href={urlVariedad(anterior.id)} data-astro-prefetch="viewport" aria-label={`Variedad anterior: ${anterior.nombre}`}><svg class="ic"><use href="#i-chevl"/></svg></a>
       <div class="count" aria-live="polite"><span id="pos">{nf.format(numero)} de {nf.format(c.variedades.length)}</span><small id="flabel">{FILTRO_TXT.todas}</small></div>
-      <a class="nbtn" id="next" href={urlVariedad(siguiente.id)} aria-label={`Variedad siguiente: ${siguiente.nombre}`}><svg class="ic"><use href="#i-chev"/></svg></a>
+      <a class="nbtn" id="next" href={urlVariedad(siguiente.id)} data-astro-prefetch="viewport" aria-label={`Variedad siguiente: ${siguiente.nombre}`}><svg class="ic"><use href="#i-chev"/></svg></a>
       <button class="nbtn" type="button" id="rand" aria-label="Variedad al azar"><svg class="ic"><use href="#i-dice"/></svg></button>
       <select class="fsel" id="fsel" aria-label="Filtrar por tipo">
         {FILTROS.map((f) => <option value={f}>{CORTO[f]}</option>)}
@@ -89,3 +90,9 @@ const esTipo = (f: string): boolean => f === 'indica' || f === 'sativa' || f ===
     </div>
   </section>
 </div>
+
+<script>
+  import { conectarNavegacion } from '../lib/navegacion.ts';
+  // En cada carga y en cada navegación: la página nueva trae sus propios botones
+  document.addEventListener('astro:page-load', () => { if (document.getElementById('nav')) conectarNavegacion(); });
+</script>
