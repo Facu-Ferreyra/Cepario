@@ -253,7 +253,8 @@ export function construirCogollo(v) {
     sc.set(s, s * (1.1 + 0.4 * r()), s);
     m4.compose(pos, q, sc);
     caliz.setMatrixAt(i, m4);
-    c.copy(p.verde).lerp(p.purpura, p.morado * (0.45 + 0.55 * Math.pow(r(), 1.5)))   // todo cáliz se tiñe algo.offsetHSL(0, 0, (r() - 0.5) * 0.06).lerp(blanco, p.escarcha * 0.18);
+    // Todo cáliz se tiñe algo de violeta (si la variedad tiene nivel); después, brillo y escarcha
+    c.copy(p.verde).lerp(p.purpura, p.morado * (0.45 + 0.55 * Math.pow(r(), 1.5))).offsetHSL(0, 0, (r() - 0.5) * 0.06).lerp(blanco, p.escarcha * 0.18);
     caliz.setColorAt(i, c);
     datosCaliz.push({ pos: pos.clone(), dir: dir.clone(), s, y });
   }
