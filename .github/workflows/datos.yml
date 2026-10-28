@@ -27,25 +27,25 @@ jobs:
 
       - name: Comprobar avisos de licencia en el código
         run: |
-          faltan=$(git ls-files '*.js' '*.mjs' '*.css' '*.yml' 'index.html' | xargs grep -L 'SPDX-License-Identifier: Apache-2.0' || true)
+          faltan=$(git ls-files '*.js' '*.mjs' '*.ts' '*.tsx' '*.astro' '*.css' '*.yml' | xargs grep -L 'SPDX-License-Identifier: Apache-2.0' || true)
           if [ -n "$faltan" ]; then
             for f in $faltan; do echo "::error file=$f::Falta el encabezado de licencia (ver CONTRIBUTING.md)"; done
             exit 1
           fi
 
-      - name: Instalar dependencias de los scripts
+      - name: Instalar dependencias
         run: npm ci
 
       - name: Validar aportes y fuentes
         run: node scripts/validate.mjs
 
       - name: Generar datos
-        run: node scripts/build-strains.mjs
+        run: npm run datos
 
       - name: Comprobar que los archivos generados estén commiteados
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::Los archivos generados no coinciden con los aportes. Corré 'node scripts/build-strains.mjs' y commiteá el resultado."
+            echo "::error::Los archivos generados no coinciden con los aportes. Corré 'npm run datos' y commiteá el resultado."
             git status --short
             exit 1
           fi

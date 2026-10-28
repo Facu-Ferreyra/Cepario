@@ -1,79 +1,372 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://facu-ferreyra.github.io/Cepario/schema/aporte.schema.json",
   "title": "Aporte de Cepario",
-  "description": "Archivo data/aportes/<slug>.json: solo los campos aportados, cada uno con su fuente. Reglas extra (fuente existente, genética que suma 100, palabras médicas) en scripts/validate.mjs.",
+  "description": "Archivo data/aportes/<slug>.json: solo los campos aportados, cada uno con su fuente. Generado desde src/lib/esquema.ts; reglas extra en scripts/validate.mjs.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "additionalProperties": false,
-  "minProperties": 1,
   "properties": {
-    "$schema": { "type": "string" },
-    "$comentario": { "type": "string", "description": "Nota para quien revisa. No se publica." },
-    "nombre": { "type": "string", "minLength": 1, "maxLength": 80, "description": "Solo para variedades nuevas (slug que no existe)." },
-    "criador": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/texto" } } },
-    "tipo": { "$ref": "#/$defs/dato", "properties": { "valor": { "enum": ["hibrida", "indica", "sativa"] } } },
+    "$schema": {
+      "type": "string"
+    },
+    "$comentario": {
+      "description": "Nota para quien revisa. No se publica.",
+      "type": "string"
+    },
+    "nombre": {
+      "description": "Solo para variedades nuevas (slug que no existe).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "criador": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
+    },
+    "tipo": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "type": "string",
+          "enum": [
+            "hibrida",
+            "indica",
+            "sativa"
+          ]
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
+    },
     "genetica": {
-      "$ref": "#/$defs/dato",
+      "type": "object",
       "properties": {
         "valor": {
           "type": "object",
-          "additionalProperties": false,
-          "required": ["indica", "sativa"],
-          "properties": { "indica": { "$ref": "#/$defs/porcentaje" }, "sativa": { "$ref": "#/$defs/porcentaje" } }
+          "properties": {
+            "indica": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "sativa": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "indica",
+            "sativa"
+          ],
+          "additionalProperties": false
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         }
-      }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
     },
-    "thc": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/thc" } } },
-    "cbd": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/cbd" } } },
-    "floracion": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/floracion" } } },
-    "sabores": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
-    "efectos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
-    "adversos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
-    "terpenos": { "$ref": "#/$defs/dato", "properties": { "valor": { "$ref": "#/$defs/lista" } } },
-    "antocianinas": {
-      "$ref": "#/$defs/dato",
-      "description": "Tendencia a violeta (antocianinas en flores y hojas). Define el color del modelo 3D.",
-      "properties": { "valor": { "enum": ["alta", "media", "baja"] } }
-    },
-    "padres": {
-      "$ref": "#/$defs/dato",
-      "properties": { "valor": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "$ref": "#/$defs/slug" } } }
-    }
-  },
-  "$defs": {
-    "dato": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["valor", "fuente"],
-      "properties": { "valor": true, "fuente": { "$ref": "#/$defs/slug" } }
-    },
-    "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
-    "texto": { "type": "string", "minLength": 1, "maxLength": 80 },
-    "lista": { "type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 40 } },
-    "porcentaje": { "type": "number", "minimum": 0, "maximum": 100 },
     "thc": {
-      "description": "THC en %: número o rango {min, max}, entre 0 y 40.",
-      "oneOf": [
-        { "type": "number", "minimum": 0, "maximum": 40 },
-        { "type": "object", "additionalProperties": false, "required": ["min", "max"],
-          "properties": { "min": { "type": "number", "minimum": 0, "maximum": 40 }, "max": { "type": "number", "minimum": 0, "maximum": 40 } } }
-      ]
+      "type": "object",
+      "properties": {
+        "valor": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 40
+            },
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 40
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false,
+      "description": "THC en %: número o rango {min, max}, entre 0 y 40."
     },
     "cbd": {
-      "description": "CBD en %: número o rango {min, max}, entre 0 y 30.",
-      "oneOf": [
-        { "type": "number", "minimum": 0, "maximum": 30 },
-        { "type": "object", "additionalProperties": false, "required": ["min", "max"],
-          "properties": { "min": { "type": "number", "minimum": 0, "maximum": 30 }, "max": { "type": "number", "minimum": 0, "maximum": 30 } } }
-      ]
+      "type": "object",
+      "properties": {
+        "valor": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 30
+            },
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 30
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false,
+      "description": "CBD en %: número o rango {min, max}, entre 0 y 30."
     },
     "floracion": {
-      "description": "Floración en semanas: número o rango {min, max}, entre 4 y 20.",
-      "oneOf": [
-        { "type": "number", "minimum": 4, "maximum": 20 },
-        { "type": "object", "additionalProperties": false, "required": ["min", "max"],
-          "properties": { "min": { "type": "number", "minimum": 4, "maximum": 20 }, "max": { "type": "number", "minimum": 4, "maximum": 20 } } }
-      ]
+      "type": "object",
+      "properties": {
+        "valor": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 4,
+              "maximum": 20
+            },
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number",
+                  "minimum": 4,
+                  "maximum": 20
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 4,
+                  "maximum": 20
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false,
+      "description": "Floración en semanas: número o rango {min, max}, entre 4 y 20."
+    },
+    "sabores": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "minItems": 1,
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
+    },
+    "efectos": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "minItems": 1,
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
+    },
+    "adversos": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "minItems": 1,
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
+    },
+    "terpenos": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "minItems": 1,
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
+    },
+    "antocianinas": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "type": "string",
+          "enum": [
+            "alta",
+            "media",
+            "baja"
+          ]
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false,
+      "description": "Tendencia a violeta (antocianinas). Define el color del modelo 3D."
+    },
+    "padres": {
+      "type": "object",
+      "properties": {
+        "valor": {
+          "minItems": 1,
+          "maxItems": 6,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "fuente": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      },
+      "required": [
+        "valor",
+        "fuente"
+      ],
+      "additionalProperties": false
     }
-  }
+  },
+  "additionalProperties": false
 }

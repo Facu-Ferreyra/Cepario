@@ -18,10 +18,8 @@ export const URL_SITIO = 'https://facu-ferreyra.github.io/Cepario/';
 
 // Campos que se muestran en la ficha, en este orden
 export const CAMPOS_FICHA = ['criador', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos', 'antocianinas'];
-// Todos los campos con fuente, en el orden en que se escriben en el JSON final
-export const CAMPOS = ['criador', 'tipo', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos', 'antocianinas', 'padres'];
-export const TIPOS = ['hibrida', 'indica', 'sativa'];
-export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// Campos con fuente (en el orden del JSON final), tipos y forma del slug: salen del esquema Zod
+export { CAMPOS, TIPOS, SLUG } from '../../src/lib/esquema.ts';
 
 /** @param {string} ruta @returns {any} */
 export const leerJSON = (ruta) => JSON.parse(readFileSync(ruta, 'utf8'));
