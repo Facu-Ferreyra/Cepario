@@ -1,0 +1,91 @@
+---
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
+// La lámina completa de una variedad: barra lateral (filtros y variedad del día), el ejemplar
+// (navegación y visor) y la etiqueta. La usan la portada y cada /v/<slug>/.
+import type { Variedad } from '../lib/esquema.ts';
+import { FILTROS, FILTRO_TXT, TIPO_TXT, nf } from '../lib/datos.ts';
+import { catalogo, vecinas, urlVariedad, type Vecina } from '../lib/catalogo.ts';
+import Ficha from './Ficha.astro';
+
+interface Props { v: Variedad }
+const { v } = Astro.props;
+const c = await catalogo();
+const { anterior, siguiente } = vecinas(c, v.id);
+const numero = c.numero.get(v.id)!;
+const aVecina = (s: string): Vecina | undefined => { const x = c.porSlug.get(s); return x && { id: x.id, nombre: x.nombre }; };
+const padres = (v.padres?.valor ?? []).map(aVecina).filter((x): x is Vecina => !!x);
+const hijos = (c.hijos.get(v.id) ?? []).map(aVecina).filter((x): x is Vecina => !!x);
+const dia = c.delDia;
+const diaTipo = dia.tipo && TIPO_TXT[dia.tipo.valor];
+const diaTexto = diaTipo && dia.criador ? `${diaTipo}, de ${dia.criador.valor}.` : diaTipo ? `${diaTipo}.` : dia.criador ? `De ${dia.criador.valor}.` : 'Datos parciales.';
+const caption = padres.length ? `Cruce de ${padres.map((p) => p.nombre).join(' × ')}.` : v.criador ? `Criada por ${v.criador.valor}.` : 'Origen sin registrar.';
+// Texto corto de cada filtro en la barra lateral y el selector, y su marca de color (solo los tipos)
+const CORTO = { todas: 'Todas', indica: 'Índicas', sativa: 'Sativas', hibrida: 'Híbridas', datos: 'Con más datos' } as const;
+const esTipo = (f: string): boolean => f === 'indica' || f === 'sativa' || f === 'hibrida';
+---
+<div class="hero" id="hero" data-slug={v.id} data-tipo={v.tipo?.valor} data-violeta={c.violeta.get(v.id)}>
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <header class="mtop">
+    <a class="brand" href={import.meta.env.BASE_URL}>Cepario<small class="tagline">Atlas de variedades de cannabis</small></a>
+    <button class="ibtn" type="button" id="mSearch" aria-label="Buscar variedad"><svg class="ic"><use href="#i-search"/></svg></button>
+  </header>
+
+  <aside class="side" aria-label="Filtros">
+    <a class="brand" href={import.meta.env.BASE_URL}>Cepario<small class="tagline">Atlas de variedades de cannabis</small></a>
+    <h2 class="side-t" id="navT">Mostrar</h2>
+    <ul class="nav" id="nav" aria-labelledby="navT">
+      {FILTROS.map((f) => (
+        <li><button type="button" data-f={f} aria-pressed={f === 'todas' ? 'true' : 'false'}><span>{esTipo(f) && <i class={`marca ${f}`} aria-hidden="true"></i>}{CORTO[f]}</span><small data-c={f}>{nf.format(c.conteos[f])}</small></button></li>
+      ))}
+    </ul>
+    <div class="feat">
+      <h2 class="side-t">Variedad del día</h2>
+      <p class="feat-n">{dia.nombre}</p>
+      <p>{diaTexto}</p>
+      <a class="feat-ir" href={urlVariedad(dia.id)}>Ver su ficha</a>
+    </div>
+  </aside>
+
+  <section class="main">
+    <nav class="navrow" aria-label="Recorrer el catálogo">
+      <a class="nbtn" id="prev" href={urlVariedad(anterior.id)} aria-label={`Variedad anterior: ${anterior.nombre}`}><svg class="ic"><use href="#i-chevl"/></svg></a>
+      <div class="count" aria-live="polite"><span id="pos">{nf.format(numero)} de {nf.format(c.variedades.length)}</span><small id="flabel">{FILTRO_TXT.todas}</small></div>
+      <a class="nbtn" id="next" href={urlVariedad(siguiente.id)} aria-label={`Variedad siguiente: ${siguiente.nombre}`}><svg class="ic"><use href="#i-chev"/></svg></a>
+      <button class="nbtn" type="button" id="rand" aria-label="Variedad al azar"><svg class="ic"><use href="#i-dice"/></svg></button>
+      <select class="fsel" id="fsel" aria-label="Filtrar por tipo">
+        {FILTROS.map((f) => <option value={f}>{CORTO[f]}</option>)}
+      </select>
+    </nav>
+    <div class="stage" id="stage" tabindex="0" role="application" aria-roledescription="visor 3D"
+         aria-label="Modelo 3D estilizado de la variedad. Arrastrá o usá las flechas para girarlo; rueda, pellizco o las teclas más y menos para hacer zoom; doble clic o 0 para volver a la vista inicial.">
+      <div class="ground" id="ground"></div>
+      <div class="loader" id="loader"><span class="ring"></span><span id="loaderText">Cargando el visor…</span></div>
+      <p class="badge3d">Representación 3D estilizada, no es una foto.</p>
+      <div class="hint" id="hint"><svg class="ic"><use href="#i-hand"/></svg>Arrastrá para girar. Rueda para acercar.</div>
+      <div class="rail">
+        <button class="rbtn" type="button" id="zin" aria-label="Acercar" aria-pressed="true"><svg class="ic"><use href="#i-zoomin"/></svg></button>
+        <button class="rbtn" type="button" id="zout" aria-label="Alejar" aria-pressed="false"><svg class="ic"><use href="#i-search"/></svg></button>
+        <button class="rbtn" type="button" id="expand" aria-label="Vista ampliada" aria-pressed="false"><svg class="ic"><use href="#i-expand"/></svg></button>
+        <button class="rbtn" type="button" id="light" aria-label="Modo oscuro" aria-pressed="false"><svg class="ic"><use href="#i-sun"/></svg></button>
+      </div>
+      <div class="turn">
+        <button type="button" id="tl" aria-label="Girar 90 grados a la izquierda"><svg class="ic"><use href="#i-ccw"/></svg></button>
+        <button type="button" id="t360" aria-label="Dar una vuelta completa">360°</button>
+        <button type="button" id="tr" aria-label="Girar 90 grados a la derecha"><svg class="ic"><use href="#i-cw"/></svg></button>
+      </div>
+      <p class="caption" id="caption">{caption}</p>
+    </div>
+  </section>
+
+  <section class="info">
+    <div class="top" id="buscador"></div>
+    <div class="card" id="detail" tabindex="-1" aria-label="Etiqueta del ejemplar">
+      <article id="article">
+        <Ficha v={v} numero={numero} padres={padres} hijos={hijos} fuentes={c.fuentes} />
+      </article>
+    </div>
+  </section>
+</div>

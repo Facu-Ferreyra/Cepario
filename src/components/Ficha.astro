@@ -1,0 +1,76 @@
+---
+// Copyright 2026 Facundo Agustín Ferreyra
+// SPDX-License-Identifier: Apache-2.0
+
+// La ficha como etiqueta de herbario: HTML estático, legible sin JavaScript. Cada dato dice quién
+// lo determinó ("Det.") según su fuente; los que faltan se juntan en "Sin determinar".
+import type { Variedad, Fuente } from '../lib/esquema.ts';
+import { CAMPOS_FICHA, TIPO_TXT, nf } from '../lib/datos.ts';
+import { urlVariedad, type Vecina } from '../lib/catalogo.ts';
+
+interface Props {
+  v: Variedad;
+  numero: number;
+  padres: Vecina[];
+  hijos: Vecina[];
+  fuentes: Record<string, Fuente>;
+}
+const { v, numero, padres, hijos, fuentes } = Astro.props;
+
+type Dato = { valor: unknown, fuente: string };
+type Campo = (typeof CAMPOS_FICHA)[number][0];
+
+function valorTexto(campo: Campo, d: Dato): string {
+  const x = d.valor as any;
+  if (Array.isArray(x)) return x.join(', ');
+  if (campo === 'genetica') return `${x.indica} % índica, ${x.sativa} % sativa`;
+  if (campo === 'thc' || campo === 'cbd') return typeof x === 'object' ? `${x.min}–${x.max} %` : `${x} %`;
+  if (campo === 'floracion') return typeof x === 'object' ? `${x.min}–${x.max} semanas` : `${x} semanas`;
+  if (campo === 'antocianinas') return x[0].toUpperCase() + x.slice(1);
+  return String(x);
+}
+/** "Kushy, 2017" y el title con nombre completo, licencia y fecha. */
+function determino(d: Dato): { corto: string, largo: string } {
+  const f = fuentes[d.fuente];
+  if (!f) return { corto: d.fuente, largo: d.fuente };
+  return { corto: `${f.nombre.split(' ')[0]}, ${f.fecha.slice(0, 4)}`, largo: `${f.nombre}, licencia ${f.licencia}, ${f.fecha}` };
+}
+
+const filas: { etiqueta: string, texto: string, det: ReturnType<typeof determino> }[] = [];
+if (v.tipo) filas.push({ etiqueta: 'Tipo', texto: TIPO_TXT[v.tipo.valor], det: determino(v.tipo) });
+for (const [campo, etiqueta] of CAMPOS_FICHA) {
+  const d = v[campo] as Dato | undefined;
+  if (d) filas.push({ etiqueta, texto: valorTexto(campo, d), det: determino(d) });
+}
+const lista = new Intl.ListFormat('es', { type: 'conjunction' });
+const enMinuscula = (s: string): string => (s === s.toUpperCase() ? s : s.toLowerCase());   // "THC" queda igual
+const faltan = [...(v.tipo ? [] : ['Tipo']), ...CAMPOS_FICHA.filter(([c]) => !v[c]).map(([, e]) => e)];
+const sinDeterminar = faltan.length ? lista.format(faltan.map((e, i) => (i ? enMinuscula(e) : e))) : '';
+
+const hijosVisibles = hijos.slice(0, 8);
+const usadas = [...new Set([...CAMPOS_FICHA.map(([c]) => (v[c] as Dato | undefined)?.fuente), v.tipo?.fuente, v.padres?.fuente].filter((x): x is string => !!x))];
+const kushy = fuentes['kushy'];
+---
+<header class="et-cab">
+  <p>Herbario Cepario<br>Ejemplar n.º {String(numero).padStart(4, '0')}</p>
+  <svg class="sello" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><circle cx="24" cy="24" r="18.5"/><use href="#i-leaf" x="12" y="11" width="24" height="24"/></svg>
+</header>
+<h1 class={v.tipo ? `t-${v.tipo.valor}` : undefined}>{v.nombre}</h1>
+<dl class="et-datos">
+  {filas.map((f) => (
+    <div class="et-fila"><dt>{f.etiqueta}</dt><dd>{f.texto}<span class="det" title={f.det.largo}><abbr title="Determinó">Det.</abbr> {f.det.corto}</span></dd></div>
+  ))}
+</dl>
+{sinDeterminar && <p class="et-faltan">Sin determinar: {sinDeterminar}.</p>}
+<h2>Linaje</h2>
+<div class="et-linaje">
+  {padres.length > 0 && v.padres && (
+    <p>Cruce de {padres.map((p, i) => <>{i > 0 && ' × '}<a href={urlVariedad(p.id)}>{p.nombre}</a></>)}.<span class="det" title={determino(v.padres).largo}><abbr title="Determinó">Det.</abbr> {determino(v.padres).corto}</span></p>
+  )}
+  {hijos.length > 0 && (
+    <p>Progenitora de {hijosVisibles.map((h, i) => <>{i > 0 && ', '}<a href={urlVariedad(h.id)}>{h.nombre}</a></>)}{hijos.length > 8 && `, y ${nf.format(hijos.length - 8)} más`}.</p>
+  )}
+  {padres.length === 0 && hijos.length === 0 && <p class="none">Sin cruces registrados.</p>}
+</div>
+<p class="fine">Base de datos bajo <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL 1.0</a>. Datos: {usadas.map((k, i) => { const f = fuentes[k]; return <>{i > 0 && ', '}{f ? <><a href={f.url} target="_blank" rel="noopener">{f.nombre}</a> ({f.licencia}, {f.fecha})</> : k}</>; })}. {kushy?.copyright} Información con fines informativos; no es consejo médico.</p>
+<button type="button" class="closeup" aria-pressed="false"><svg class="ic"><use href="#i-zoomin"/></svg>Ver de cerca</button>

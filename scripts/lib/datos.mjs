@@ -12,12 +12,6 @@ export const DIR_DATA = join(ROOT, 'data');
 export const DIR_IMPORTADOS = join(DIR_DATA, 'importados');
 export const DIR_APORTES = join(DIR_DATA, 'aportes');
 export const ARCHIVO_FUENTES = join(DIR_DATA, 'fuentes.json');
-export const DIR_PAGINAS = join(ROOT, 'v');
-// URL pública del sitio (GitHub Pages). Se usa en el sitemap y en los <link rel="canonical">.
-export const URL_SITIO = 'https://facu-ferreyra.github.io/Cepario/';
-
-// Campos que se muestran en la ficha, en este orden
-export const CAMPOS_FICHA = ['criador', 'genetica', 'thc', 'cbd', 'floracion', 'sabores', 'efectos', 'adversos', 'terpenos', 'antocianinas'];
 // Campos con fuente (en el orden del JSON final), tipos y forma del slug: salen del esquema Zod
 export { CAMPOS, TIPOS, SLUG } from '../../src/lib/esquema.ts';
 
@@ -38,6 +32,3 @@ export function listarJSON(dir, { incluirEjemplos = false } = {}) {
     .sort()
     .map((f) => ({ archivo: f, ruta: join(dir, f), slug: basename(f, '.json').replace(/^_/, '') }));
 }
-
-export const ordenarPorNombre = (a, b) =>
-  a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);

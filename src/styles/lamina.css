@@ -36,7 +36,9 @@ button,select{font:inherit;color:inherit;background:none;border:0;padding:0;curs
 .feat .side-t{margin-top:0}
 .feat-n{font-family:var(--nombre);font-size:20px;line-height:1.15;margin-top:6px;overflow-wrap:anywhere}
 .feat p:not(.feat-n){font-size:13px;color:var(--tenue);margin-top:4px}
-.feat button{margin-top:8px;font-size:14px;color:var(--clorofila);text-decoration:underline;text-underline-offset:3px}
+.feat-ir{display:inline-block;margin-top:8px;font-size:14px;color:var(--clorofila);text-decoration:underline;text-underline-offset:3px}
+a.brand{color:inherit;text-decoration:none}
+a.nbtn{color:inherit}
 
 /* ---------- CENTRO: EL EJEMPLAR ---------- */
 .main{display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;min-height:0;padding:26px 18px 14px 22px}
